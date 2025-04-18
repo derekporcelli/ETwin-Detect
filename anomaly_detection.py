@@ -2,6 +2,8 @@
 
 from scapy.all import Dot11Elt
 
+from alerting import generate_alert
+
 class AnomalyDetector:
     def __init__(self, profiler):
         self.profiler = profiler
@@ -25,12 +27,13 @@ class AnomalyDetector:
 
         if ssid in trusted_ssids and bssid not in known_bssids:
             alert_msg = f"[!] SSID Spoofing Detected: SSID '{ssid}' from unknown BSSID '{bssid}'"
+            alert_channel_msg = f"[+] Flagged {bssid} as RAP for SSID spoofing on Channel {channel}."
             print(alert_msg)
 
             if bssid not in self.blacklist:
                 self.profiler.set_ap_status(bssid, status='RAP', reason='SSID_SPOOFING', channel=int(channel))
                 self.blacklist.add(bssid)
-                print(f"[+] Flagged {bssid} as RAP for SSID spoofing on Channel {channel}.")
+                generate_alert(self.profiler, alert_msg, alert_channel_msg)
             else:
                 print(f"[-] BSSID {bssid} already flagged.")
 
