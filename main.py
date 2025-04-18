@@ -111,10 +111,10 @@ if __name__ == "__main__":
     logging.info(f"Using interface: {args.interface}")
     logging.info(f"Using database: {args.db}")
 
-    monitor = monitoring.Monitor(args.interface)
-    profiler = profiling.Profiler(args.db)
+    profiler = profiling.APProfiler(args.db)
     alerter = alerting.Alerter()
-    detector = anomaly_detection.Detector(profiler) # Pass profiler to detector
+    detector = anomaly_detection.AnomalyDetector(profiler) # Pass profiler to detector
+    monitor = monitoring.Monitor(interface=args.interface, anomaly_detector=detector)
     # if args.enable_deauth:
         # counter_module = counter.Counter(args.interface) # Optional
         # detector.set_counter_module(counter_module) # Need method in Detector to link them

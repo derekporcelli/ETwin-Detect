@@ -1,9 +1,10 @@
 import subprocess
 import shutil
 from scapy.all import sniff, Dot11, Dot11Beacon, Dot11ProbeResp, Dot11Elt
+import anomaly_detection
 
 class Monitor:
-    def __init__(self, interface=None, whitelist=None):
+    def __init__(self, interface=None, whitelist=None, anomaly_detector=None):
         # Step 1.1.1: Identify wireless interface if not provided
         self.interface = interface or self.get_wireless_interface()
         # Save original mode to revert later
@@ -13,6 +14,9 @@ class Monitor:
         self.whitelist = whitelist or set()  # TODO: populate whitelist of known SSIDs
         self.blacklist = set()              # TODO: store blacklisted BSSIDs
         self.seen_bssids = set()            # Track seen BSSIDs for logic
+
+        # Anomaly detection
+        self.anomaly_detector = anomaly_detector or anomaly_detection.AnomalyDetector(self)
 
     @staticmethod
     def get_wireless_interface():
@@ -90,21 +94,8 @@ class Monitor:
             ssid = pkt[Dot11Elt].info.decode(errors='ignore') if pkt.haslayer(Dot11Elt) else ''
             bssid = pkt[Dot11].addr2
 
-            # Track seen BSSIDs
-            is_new = bssid not in self.seen_bssids
-            if is_new:
-                self.seen_bssids.add(bssid)
+            self.anomaly_detector.check_bssid_whitelist(ssid, bssid, pkt)
 
-                if ssid in self.whitelist:
-                    # Whitelisted SSID seen
-                    # TODO: if bssid matches known good, handle as legit
-                    # TODO: if bssid differs, add to blacklist
-                    print(f"[!] {ssid} seen with new BSSID {bssid} (whitelisted SSID)")
-                    # self.blacklist.add(bssid)
-                else:
-                    # SSID not in whitelist
-                    # TODO: handle unknown SSID (possible new network)
-                    print(f"[?] New SSID detected: {ssid} (BSSID {bssid})")
 
     def start_sniff(self, timeout=None):
         """
@@ -117,13 +108,3 @@ class Monitor:
                   timeout=timeout)
         except KeyboardInterrupt:
             pass
-
-# Example usage:
-if __name__ == '__main__':
-    # Example whitelist: {'HomeWiFi', 'OfficeSSID'}
-    m = Monitor(whitelist={'HomeWiFi', 'OfficeSSID'})
-    m.set_monitor_mode()
-    try:
-        m.start_sniff(timeout=30)
-    finally:
-        m.revert_mode()
