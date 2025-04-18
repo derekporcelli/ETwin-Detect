@@ -1,5 +1,5 @@
 import subprocess
-from scapy import sniff
+from scapy.all import sniff
 
 class Monitor:
     def __init__(self, interface_name):
