@@ -19,7 +19,7 @@ import alerting
 # import counter # Optional for Phase 4
 
 # --- Configuration ---
-DEFAULT_DB_PATH = 'trusted_aps.db'
+DEFAULT_DB_PATH = 'database.db'
 # Add other configurations like thresholds, learning duration etc.
 
 # --- Logging Setup ---
