@@ -1,3 +1,7 @@
+# anomaly_detection.py
+
+from scapy.all import Dot11Elt
+
 class AnomalyDetector:
     def __init__(self, profiler):
         self.profiler = profiler
@@ -17,7 +21,7 @@ class AnomalyDetector:
     def check_bssid_whitelist(self, ssid, bssid, pkt):
         trusted_ssids = self.profiler.get_trusted_ssids()
         known_bssids = self.profiler.get_known_bssids()
-	channel = get_channel_from_packet(self, pkt)
+        channel = self.get_channel_from_packet(self, pkt)
 
         if ssid in trusted_ssids and bssid not in known_bssids:
             alert_msg = f"[!] SSID Spoofing Detected: SSID '{ssid}' from unknown BSSID '{bssid}'"
