@@ -327,6 +327,8 @@ def run_profiling(iface):
         authentication_raw = row.get('Authentication', '').strip()
         channel = row.get('CH') # Use standardized name
 
+        print(f"Debug: beacons: {beacons}")
+
         if not aggregated_results[bssid]['ssid'] and ssid: aggregated_results[bssid]['ssid'] = ssid
         if pd.notna(power) and -99 <= power < 0:
             aggregated_results[bssid]['rssi_values'].append(int(power))
