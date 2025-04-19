@@ -106,10 +106,11 @@ def set_monitor_mode(iface, enable=True):
 
 # --- Database Operations ---
 def init_db():
-    """Initializes the SQLite database and creates the whitelist table."""
+    """Initializes the SQLite database and creates the whitelist table with raw auth fields."""
     db_path = config['general']['db_name']
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+    # *** UPDATED SCHEMA ***
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS whitelist (
             ssid TEXT NOT NULL,
@@ -117,29 +118,34 @@ def init_db():
             channel INTEGER,
             avg_rssi REAL,
             stddev_rssi REAL,
-            auth_type TEXT,
-            cipher TEXT,
+            privacy_raw TEXT,         -- Storing raw values now
+            cipher_raw TEXT,          -- Storing raw values now
+            authentication_raw TEXT,  -- Storing raw values now
             avg_beacon_rate REAL,
             profiled_time TEXT NOT NULL
-        )
+        );
     ''')
     conn.commit()
     conn.close()
     print(f"Database '{db_path}' initialized.")
 
 def add_to_whitelist(profile_data):
-    """Adds or updates an AP profile in the whitelist."""
+    """Adds or updates an AP profile (with raw auth fields) in the whitelist."""
     db_path = config['general']['db_name']
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+    # *** UPDATED SQL AND PARAMETERS ***
     cursor.execute('''
         INSERT OR REPLACE INTO whitelist
-        (ssid, bssid, channel, avg_rssi, stddev_rssi, auth_type, cipher, avg_beacon_rate, profiled_time)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (ssid, bssid, channel, avg_rssi, stddev_rssi, privacy_raw, cipher_raw, authentication_raw, avg_beacon_rate, profiled_time)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         profile_data['ssid'], profile_data['bssid'].lower(), profile_data['channel'],
-        profile_data['avg_rssi'], profile_data['stddev_rssi'], profile_data['auth_type'],
-        profile_data['cipher'], profile_data['avg_beacon_rate'], profile_data['profiled_time']
+        profile_data['avg_rssi'], profile_data['stddev_rssi'],
+        profile_data['privacy_raw'],  
+        profile_data['cipher_raw'],       
+        profile_data['authentication_raw'],
+        profile_data['avg_beacon_rate'], profile_data['profiled_time']
     ))
     conn.commit()
     conn.close()
@@ -151,74 +157,30 @@ def parse_airodump_csv(csv_path):
     aps_data = []
     try:
         with open(csv_path, 'r', encoding='utf-8', errors='ignore') as f:
-            in_ap_section = False
-            header = []
+            in_ap_section = False; header = []
             for line in f:
-                line = line.strip()
+                line = line.strip();
                 if not line: continue
                 if line.startswith("BSSID,"):
-                    in_ap_section = True
-                    header = [h.strip() for h in line.split(',')]
+                    in_ap_section = True; header = [h.strip() for h in line.split(',')]
+                    # Standardize headers that might vary
                     header = [h.replace(' # ', '#') for h in header]
                     header = [h.replace(' PWR', 'Power') for h in header]
+                    header = [h if h != 'channel' else 'CH' for h in header] # Standardize channel
                     continue
-                if line.startswith("Station MAC,"): break # Stop at client section
+                if line.startswith("Station MAC,"): break
                 if in_ap_section:
-                    values = [v.strip() for v in line.split(',', maxsplit=len(header) - 1)]
+                    values = [v.strip() for v in line.split(',', maxsplit=len(header) - 1)];
                     if len(values) == len(header): aps_data.append(dict(zip(header, values)))
-
         if not aps_data: return pd.DataFrame()
-
         df = pd.DataFrame(aps_data)
+        # Convert columns using standardized names
         for col in ['Power', '#Beacons', '#Data', 'CH']:
             if col in df.columns: df[col] = pd.to_numeric(df[col], errors='coerce')
-        # Clean ESSID (remove leading/trailing spaces)
         if 'ESSID' in df.columns: df['ESSID'] = df['ESSID'].str.strip()
-
         return df
-
     except FileNotFoundError: print(f"Warning: CSV file not found: {csv_path}"); return pd.DataFrame()
     except Exception as e: print(f"Error parsing CSV {csv_path}: {e}"); return pd.DataFrame()
-
-def parse_privacy_strings(privacy_set):
-    """Parses a set of 'Privacy' strings from airodump-ng to determine auth/cipher."""
-    # (Using the robust parsing logic from previous iteration)
-    auth_type = "Unknown"; cipher = "Unknown"; enc_types = set(); auth_modes = set(); ciphers = set()
-    has_wpa3 = any("WPA3" in s for s in privacy_set); has_wpa2 = any("WPA2" in s for s in privacy_set)
-    has_wpa = any("WPA" in s and "WPA2" not in s and "WPA3" not in s for s in privacy_set)
-    has_wep = any("WEP" in s for s in privacy_set); is_opn = any("OPN" in s for s in privacy_set)
-    if has_wpa3: enc_types.add("WPA3");
-    if has_wpa2: enc_types.add("WPA2")
-    if has_wpa: enc_types.add("WPA");
-    if has_wep: enc_types.add("WEP");
-    if is_opn: enc_types.add("OPN")
-    for s in privacy_set:
-        parts = s.split()
-        if "CCMP" in parts: ciphers.add("CCMP");
-        if "TKIP" in parts: ciphers.add("TKIP")
-        if "GCMP-128" in parts: ciphers.add("GCMP-128") # Check 128 first
-        elif "GCMP" in parts: ciphers.add("GCMP-256") # Assume 256 if just GCMP
-        if "WEP" in parts or "WEP104" in parts or "WEP40" in parts: ciphers.add("WEP")
-        if "PSK" in parts: auth_modes.add("PSK");
-        if "SAE" in parts: auth_modes.add("SAE")
-        if "MGT" in parts: auth_modes.add("MGT"); # 802.1X/EAP
-        if "OWE" in parts: auth_modes.add("OWE")
-    if is_opn and "OWE" not in auth_modes: auth_type = "OPEN"
-    if "OWE" in auth_modes: auth_type = "OWE"
-    if has_wep and not (has_wpa or has_wpa2 or has_wpa3 or auth_type == "OWE"): auth_type = "WEP"
-    if has_wpa and not (has_wpa2 or has_wpa3 or auth_type == "OWE"): auth_type = "WPA"
-    if has_wpa2 and not has_wpa3: auth_type = "WPA2"
-    if has_wpa3: auth_type = "WPA3"
-    if "PSK" in auth_modes and auth_type in ["WPA", "WPA2"]: auth_type += "-PSK"
-    if "MGT" in auth_modes and auth_type in ["WPA", "WPA2", "WPA3"]: auth_type += "-EAP"
-    if "SAE" in auth_modes and auth_type == "WPA3": auth_type += "-SAE"
-    if "GCMP-256" in ciphers: cipher = "GCMP-256"
-    elif "GCMP-128" in ciphers: cipher = "GCMP-128"
-    elif "CCMP" in ciphers: cipher = "CCMP"
-    elif "TKIP" in ciphers: cipher = "TKIP"
-    elif "WEP" in ciphers and auth_type == "WEP": cipher = "WEP"
-    elif auth_type in ["OPEN", "OWE"]: cipher = "None"
-    return auth_type, cipher
 
 # --- Main Profiling Function (Single Scan) ---
 def run_profiling(iface):
@@ -350,68 +312,68 @@ def run_profiling(iface):
         'beacons_total': 0, 'privacy_strings': set()
     })
 
-    for index, row in target_ap_df.iterrows():
-        bssid = row.get('BSSID')
-        if not bssid or not isinstance(bssid, str) or len(bssid) != 17 : continue # Basic validation
+    print(target_ap_df) # Debug
 
-        ssid = row.get('ESSID', '').strip()
-        power = row.get('Power')
-        beacons = row.get('#Beacons', 0)
-        privacy = row.get('Privacy', '').strip()
-        channel = row.get('CH')
+    for index, row in target_ap_df.iterrows():
+        bssid = row.get('BSSID');
+        if not bssid or not isinstance(bssid, str) or len(bssid) != 17 : continue
+        ssid = row.get('ESSID', '').strip(); power = row.get('Power')
+        beacons = row.get('#Beacons', 0) # Use standardized name
+        privacy_raw = row.get('Privacy', '').strip()
+        cipher_raw = row.get('Cipher', '').strip()
+        authentication_raw = row.get('Authentication', '').strip()
+        channel = row.get('CH') # Use standardized name
 
         if not aggregated_results[bssid]['ssid'] and ssid: aggregated_results[bssid]['ssid'] = ssid
         if pd.notna(power) and -99 <= power < 0:
             aggregated_results[bssid]['rssi_values'].append(int(power))
             if pd.notna(channel): aggregated_results[bssid]['channel_rssi'][int(channel)].append(int(power))
         if pd.notna(beacons): aggregated_results[bssid]['beacons_total'] += int(beacons)
-        if privacy: aggregated_results[bssid]['privacy_strings'].add(privacy)
+        if privacy_raw: aggregated_results[bssid]['privacy_raw_values'].add(privacy_raw)
+        if cipher_raw: aggregated_results[bssid]['cipher_raw_values'].add(cipher_raw)
+        if authentication_raw: aggregated_results[bssid]['authentication_raw_values'].add(authentication_raw)
 
     # --- Calculate Features and Save to DB ---
     print("Calculating final profiles and saving to database...")
-    profile_time = datetime.datetime.now().isoformat()
-    saved_count = 0
-
-    # Use the actual duration the scan ran for beacon rate calculation
-    actual_scan_duration_seconds = actual_duration if 'actual_duration' in locals() else total_duration
+    profile_time = datetime.datetime.now().isoformat(); saved_count = 0
+    actual_scan_duration_seconds = actual_duration if 'actual_duration' in locals() and actual_duration > 1 else total_duration
 
     for bssid, data in aggregated_results.items():
-        if not data['ssid']: continue # Should not happen after filtering, but safe check
-
+        if not data['ssid']: continue
         avg_rssi = round(statistics.mean(data['rssi_values']), 2) if data['rssi_values'] else None
         stddev_rssi = round(statistics.stdev(data['rssi_values']), 2) if len(data['rssi_values']) >= 2 else 0.0
-
         primary_channel = None; best_avg_rssi_for_chan = -100.0
         if data['channel_rssi']:
             for chan, rssi_list in data['channel_rssi'].items():
-                if rssi_list:
-                    chan_avg = statistics.mean(rssi_list)
-                    if chan_avg > best_avg_rssi_for_chan: best_avg_rssi_for_chan = chan_avg; primary_channel = chan
-            if primary_channel is None and data['channel_rssi']: primary_channel = list(data['channel_rssi'].keys())[0] # Fallback
-
-        # Beacon Rate = Total Beacons / Scan Duration
+                if rssi_list: chan_avg = statistics.mean(rssi_list);
+                if chan_avg > best_avg_rssi_for_chan: best_avg_rssi_for_chan = chan_avg; primary_channel = chan
+            if primary_channel is None and data['channel_rssi']: primary_channel = list(data['channel_rssi'].keys())[0]
         avg_beacon_rate = round(data['beacons_total'] / actual_scan_duration_seconds, 2) if actual_scan_duration_seconds > 0 else 0.0
 
-        auth_type, cipher = parse_privacy_strings(data['privacy_strings'])
+        # *** SELECT REPRESENTATIVE RAW STRINGS ***
+        # Take the first one alphabetically, or None if empty set
+        privacy_repr = sorted(list(data['privacy_raw_values']))[0] if data['privacy_raw_values'] else None
+        cipher_repr = sorted(list(data['cipher_raw_values']))[0] if data['cipher_raw_values'] else None
+        auth_repr = sorted(list(data['authentication_raw_values']))[0] if data['authentication_raw_values'] else None
 
+        # *** PREPARE DB DATA WITH RAW FIELDS ***
         profile_data = {
             'ssid': data['ssid'], 'bssid': bssid, 'channel': primary_channel,
-            'avg_rssi': avg_rssi, 'stddev_rssi': stddev_rssi, 'auth_type': auth_type,
-            'cipher': cipher, 'avg_beacon_rate': avg_beacon_rate, 'profiled_time': profile_time
+            'avg_rssi': avg_rssi, 'stddev_rssi': stddev_rssi,
+            'privacy_raw': privacy_repr,
+            'cipher_raw': cipher_repr,
+            'authentication_raw': auth_repr,
+            'avg_beacon_rate': avg_beacon_rate, 'profiled_time': profile_time
         }
 
-        print(f"  -> Saving: {profile_data['ssid']} ({profile_data['bssid']}) Ch:{profile_data['channel']} RSSI:{profile_data['avg_rssi']} +/- {profile_data['stddev_rssi']} Auth:{profile_data['auth_type']}/{profile_data['cipher']} Rate:{profile_data['avg_beacon_rate']:.2f}/s")
-        add_to_whitelist(profile_data)
+        print(f"  -> Saving: {profile_data['ssid']} ({profile_data['bssid']}) Ch:{profile_data['channel']} RSSI:{profile_data['avg_rssi']} +/- {profile_data['stddev_rssi']} "
+              f"Privacy:'{profile_data['privacy_raw']}' Cipher:'{profile_data['cipher_raw']}' Auth:'{profile_data['authentication_raw']}' Rate:{profile_data['avg_beacon_rate']:.2f}/s")
+        add_to_whitelist(profile_data) # Call the updated add function
         saved_count += 1
 
-    print(f"\nWhitelist update complete. Profiles saved for target SSIDs: {saved_count}")
-
-    # --- Cleanup Temp Directory ---
-    try:
-        print(f"Removing temporary directory: {temp_dir}")
-        shutil.rmtree(temp_dir)
-    except Exception as e: print(f"Warning: Failed to remove temporary directory {temp_dir}: {e}")
-
+    print(f"\nWhitelist update complete. Profiles saved: {saved_count}")
+    try: print(f"Removing temporary directory: {temp_dir}"); shutil.rmtree(temp_dir)
+    except Exception as e: print(f"Warning: Failed to remove {temp_dir}: {e}")
 
 # --- Main Execution Block ---
 if __name__ == "__main__":
