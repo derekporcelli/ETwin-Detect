@@ -16,7 +16,9 @@ import json # Added for config file handling
 CONFIG_DEFAULTS = {
     "general": {
         "interface": "wlan0",
-        "db_name": "ap_profile.db"
+        "db_name": "ap_profile.db",
+        "channel_hop_delay_seconds": 0.5,
+        "channels_to_scan": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
     },
     "profiling": {
         "duration_seconds": 60,
@@ -25,9 +27,7 @@ CONFIG_DEFAULTS = {
     "monitoring": {
         "target_ssids": [],
         "enable_deauth_prompt": False,
-        "channel_hop_delay_seconds": 0.5,
-        "channels_to_scan": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-         "blacklist_check_interval_seconds": 30
+        "blacklist_check_interval_seconds": 30
     },
     "anomaly_thresholds": {
         "signal_strength_dbm_diff": 15,
@@ -608,13 +608,33 @@ def run_profiling(iface, target_ssids, duration):
     print(f"Profiling duration: {duration} seconds")
     print("Capturing baseline data for legitimate APs...")
 
+    channels_to_scan = config['general']['channels_to_scan']
+    channel_hop_delay = config['general']['channel_hop_delay']
+
+    if not channels_to_scan:
+        print("No channels specified for profiling. Please check your configuration.")
+        return
+    if channel_hop_delay <= 0:
+        print("Invalid channel hop delay specified. Please check your configuration.")
+        return
+
     global profiling_data_store
     profiling_data_store.clear() # Clear previous data
 
     handler = packet_handler_profiling(target_ssids)
+    start_time = time.time()
 
     try:
-        scapy.sniff(iface=iface, prn=handler, timeout=duration, store=False)
+        while time.time() - start_time < duration:
+            print(f"\nStarting new profiling cycle...")
+            for channel in channels_to_scan:
+                if time.time() - start_time >= duration:
+                    print("Profiling duration reached. Stopping...")
+                    break
+                set_channel(iface, channel) # Set the channel for sniffing
+            if time.time() - start_time >= duration:
+                break
+        
     except OSError as e:
          print(f"Error sniffing: {e}. Do you have permissions (root)? Is the interface correct ('{iface}') and in monitor mode?")
          return
@@ -729,8 +749,8 @@ def run_monitoring(iface, target_ssids, enable_deauth):
     print("Starting packet sniffing for monitoring... Press Ctrl+C to stop.")
     last_blacklist_check = time.time()
     blacklist_check_interval = config['monitoring']['blacklist_check_interval_seconds']
-    channel_hop_delay = config['monitoring']['channel_hop_delay_seconds']
-    channels_to_scan = config['monitoring']['channels_to_scan']
+    channel_hop_delay = config['general']['channel_hop_delay_seconds']
+    channels_to_scan = config['general']['channels_to_scan']
 
 
     handler = packet_handler_monitoring(target_ssids, whitelist_bssids_map, deauth_prompt_callback if enable_deauth else None)
