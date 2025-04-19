@@ -17,11 +17,11 @@ CONFIG_DEFAULTS = {
     "general": {
         "interface": "wlan0",
         "db_name": "ap_profile.db",
-        "channel_hop_delay": 0.5,
+        "channel_hop_delay": 15,
         "channels_to_scan": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
     },
     "profiling": {
-        "duration_seconds": 60,
+        "duration_seconds": 210,
         "target_ssids": []
     },
     "monitoring": {
