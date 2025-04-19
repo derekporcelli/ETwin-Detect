@@ -80,7 +80,6 @@ def set_monitor_mode(iface, enable=True):
 
     action = "start" if enable else "stop"
     print(f"{'Enabling' if enable else 'Disabling'} monitor mode on {iface}...")
-    monitor_iface_name = None
 
     try:
         if enable:
@@ -94,9 +93,10 @@ def set_monitor_mode(iface, enable=True):
             return monitor_iface_active
 
         else: # Disabling
-            print(f"Monitor mode stop command executed for {iface}mon.")
-            subprocess.run(['airmon-ng', 'stop', f"{iface}mon"], check=False, capture_output=True, timeout=15)
-            print("Attempting to restart NetworkManager..."); subprocess.run(['systemctl', 'restart', 'NetworkManager'], check=False, capture_output=True, timeout=15)
+            print(f"Monitor mode stop command executed for {iface}.")
+            subprocess.run(['airmon-ng', 'stop', iface], check=False, capture_output=True, timeout=15)
+            print("Attempting to restart NetworkManager...")
+            subprocess.run(['systemctl', 'start', 'NetworkManager'], check=False, capture_output=True, timeout=15)
             return iface
 
     except subprocess.CalledProcessError as e: print(f"Error airmon-ng: {e.stderr}"); return None
