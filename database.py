@@ -69,3 +69,6 @@ def insert_evil(ssid, bssid, channel):
     conn.commit()
     conn.close()
     print("[+] AP Object added to 'blacklist' table.")
+
+    #TODO: search whitelist for bssid
+    

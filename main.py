@@ -12,14 +12,13 @@ from scapy.all import sniff, RadioTap, Dot11, Dot11Beacon, Dot11ProbeResp, \
 
 # Import custom modules (assuming they are in the same directory or python path)
 import monitoring
-import feature_extraction
 import profiling
-import anomaly_detection
 import alerting
+import database
 # import counter # Optional for Phase 4
 
 # --- Configuration ---
-DEFAULT_DB_PATH = 'database.db'
+DEFAULT_DB_PATH = 'network_profiles.db'
 # Add other configurations like thresholds, learning duration etc.
 
 # --- Logging Setup ---
@@ -28,47 +27,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # --- Global Variables ---
 monitor = None
 profiler = None
-detector = None
 alerter = None
 # counter_module = None # Optional
-
-# --- Packet Processing Callback ---
-def packet_handler(packet):
-    """
-    Callback function for Scapy's sniff(). Processes captured 802.11 frames.
-    """
-    global detector, alerter # Add others if needed
-
-    if not detector or not alerter:
-        logging.warning("Core components not initialized yet.")
-        return
-
-    # Phase 1 & 2: Beacon and Probe Response Processing
-    if packet.haslayer(Dot11Beacon) or packet.haslayer(Dot11ProbeResp):
-        features = feature_extraction.extract_beacon_probe_response_features(packet)
-        if features:
-            anomaly = detector.check_beacon_probe_response(features)
-            if anomaly:
-                alerter.generate_alert(anomaly['type'], anomaly['details'])
-            # Update last seen timestamp for trusted APs
-            if features.get('bssid') and not anomaly:
-                 profiler.update_last_observed(features['bssid'])
-
-
-    # Phase 3: Association Frame Processing
-    elif packet.haslayer(Dot11AssoReq):
-        features = feature_extraction.extract_association_request_features(packet)
-        if features:
-            detector.check_association_request(features)
-
-    elif packet.haslayer(Dot11AssoResp):
-        features = feature_extraction.extract_association_response_features(packet)
-        if features:
-            anomaly = detector.check_association_response(features)
-            if anomaly:
-                alerter.generate_alert(anomaly['type'], anomaly['details'])
-
-    # Add processing for other frame types if needed
 
 # --- Cleanup Function ---
 def cleanup():
@@ -111,10 +71,13 @@ if __name__ == "__main__":
     logging.info(f"Using interface: {args.interface}")
     logging.info(f"Using database: {args.db}")
 
+    database.create_connection()
+    database.create_blacklist_table()
+    database.create_whitelist_table()
+
     profiler = profiling.APProfiler(args.db)
     alerter = alerting.Alerter()
-    detector = anomaly_detection.AnomalyDetector(profiler) # Pass profiler to detector
-    monitor = monitoring.Monitor(interface=args.interface, anomaly_detector=detector)
+    monitor = monitoring.Monitor(interface=args.interface)
     # if args.enable_deauth:
         # counter_module = counter.Counter(args.interface) # Optional
         # detector.set_counter_module(counter_module) # Need method in Detector to link them
@@ -180,7 +143,7 @@ if __name__ == "__main__":
     logging.info("Starting passive scan for Evil Twin APs...")
     try:
         # filter="type mgt subtype beacon or type mgt subtype probe-resp or type mgt subtype assoc-req or type mgt subtype assoc-resp" # More specific filter
-        monitor.start_sniffing(packet_handler) # Blocks here until stopped
+        monitor.start_sniffing(monitor.packet_handler) # Blocks here until stopped
     except KeyboardInterrupt:
         logging.info("Scan stopped by user.")
     except Exception as e:
