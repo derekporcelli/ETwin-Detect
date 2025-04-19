@@ -91,8 +91,6 @@ def set_monitor_mode(iface, enable=True):
             proc = subprocess.run(['airmon-ng', action, iface], check=True, capture_output=True, text=True, timeout=15)
 
             monitor_iface_active = f"{iface}mon"
-            subprocess.run(['ip', 'link', 'set', monitor_iface_name, 'up'], check=True, capture_output=True, timeout=5)
-            print(f"Interface {monitor_iface_name} brought up.")
             return monitor_iface_active
 
         else: # Disabling
