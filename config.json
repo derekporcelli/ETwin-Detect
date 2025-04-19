@@ -7,10 +7,10 @@
     },
     "profiling": {
       "duration_seconds": 60,
-      "target_ssids": ["MyHomeWiFi", "MyGuestWiFi", "Eduroam"]
+      "target_ssids": ["malmalmal"]
     },
     "monitoring": {
-      "target_ssids": ["MyHomeWiFi", "MyGuestWiFi", "Eduroam"],
+      "target_ssids": ["malmalmal"],
       "enable_deauth_prompt": false,
       "blacklist_check_interval_seconds": 30
     },
