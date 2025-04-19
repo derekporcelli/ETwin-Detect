@@ -231,7 +231,7 @@ def set_monitor_mode(iface, enable=True):
         return monitor_iface if enable else iface
     except subprocess.CalledProcessError as e:
         print(f"Error setting monitor mode: {e}")
-        print(f"Stderr: {e.stderr.decode()}")
+        print(f"Stderr: {e}")
         sys.exit(1)
     except FileNotFoundError:
         print("Error: 'airmon-ng' (or 'ip') command not found. Is aircrack-ng suite installed and in PATH?")
