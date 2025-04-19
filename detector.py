@@ -267,7 +267,6 @@ def get_packet_features(pkt):
     features = {'bssid': None, 'ssid': None, 'channel': None, 'signal': None, 'auth_schemes': set(), 'beacon_interval': None}
     if pkt.haslayer(scapy.Dot11):
         # Use addr2 for BSSID in most management frames like Beacon, ProbeResp, AssocResp, Auth, Deauth, Disassoc
-        # addr1 is DA, addr3 can be SA/DA depending on context.
         if hasattr(pkt[scapy.Dot11], 'addr2'):
             features['bssid'] = pkt[scapy.Dot11].addr2 # AP MAC address (BSSID)
 
@@ -278,10 +277,10 @@ def get_packet_features(pkt):
             channel_found = False
             while elt:
                 try:
-                    if not ssid_found and elt.ID == 0: # SSID
+                    if not ssid_found and elt.ID == 0 and hasattr(elt, 'info'): # SSID
                         features['ssid'] = elt.info.decode('utf-8', errors='ignore')
                         ssid_found = True
-                    elif not channel_found and elt.ID == 3: # DSset (Channel)
+                    elif not channel_found and elt.ID == 3 and hasattr(elt, 'channel'): # DSset (Channel)
                         features['channel'] = int(elt.channel)
                         channel_found = True
                     elif elt.ID == 48: # RSN (WPA2/WPA3)
@@ -301,37 +300,35 @@ def get_packet_features(pkt):
         # Extract Signal Strength (from RadioTap) - Best effort
         try:
              if pkt.haslayer(scapy.RadioTap):
-                 # Search for dBm_AntSignal, fallback to older names if needed
                  if hasattr(pkt[scapy.RadioTap], 'dBm_AntSignal'):
                       features['signal'] = pkt[scapy.RadioTap].dBm_AntSignal
-                 elif hasattr(pkt[scapy.RadioTap], 'dbm_antsignal'): # Some drivers/versions use lowercase
+                 elif hasattr(pkt[scapy.RadioTap], 'dbm_antsignal'):
                       features['signal'] = pkt[scapy.RadioTap].dbm_antsignal
 
-                 # Extract Channel from RadioTap if not found in Dot11Elt (more reliable source often)
+                 # Extract Channel from RadioTap if not found in Dot11Elt
                  if features['channel'] is None and hasattr(pkt[scapy.RadioTap], 'ChannelFrequency'):
                       freq = pkt[scapy.RadioTap].ChannelFrequency
                       if 2412 <= freq <= 2484: # 2.4 GHz
                           features['channel'] = int((freq - 2412) / 5) + 1
                       elif 5170 <= freq <= 5825: # 5 GHz U-NII bands
-                          # Formula for common 5GHz channels (adjust if needed for other regions/bands)
-                          if freq == 5000: features['channel'] = 200 # Example special case
-                          else: features['channel'] = int((freq - 5000) / 5) # General formula starting point
-                      # Add more ranges (4.9GHz, 6GHz etc. if needed)
+                          if freq == 5000: features['channel'] = 200
+                          else: features['channel'] = int((freq - 5000) / 5)
         except Exception:
-            pass # Signal strength or Channel Freq might not be present
+            pass
 
         # Extract Beacon Interval and Capabilities (if Beacon/ProbeResp)
         if pkt.haslayer(scapy.Dot11Beacon) or pkt.haslayer(scapy.Dot11ProbeResp):
              layer = pkt.getlayer(scapy.Dot11Beacon) or pkt.getlayer(scapy.Dot11ProbeResp)
              if hasattr(layer, 'beacon_interval'):
                   features['beacon_interval'] = layer.beacon_interval # Time Units (TU), 1 TU = 1024 microseconds
-             if hasattr(layer, 'cap') and isinstance(layer.cap, scapy.Dot11Caps):
+
+             # --- !!! --- CORRECTED LINE BELOW --- !!! ---
+             if hasattr(layer, 'cap') and isinstance(layer.cap, scapy.layers.dot11.Dot11Caps):
+                # --- !!! --- END CORRECTION --- !!! ---
                 if layer.cap.privacy: # Check privacy bit
-                    # If RSN/WPA already found, they are more specific
                     if not ('RSN' in features['auth_schemes'] or 'WPA' in features['auth_schemes']):
-                         features['auth_schemes'].add('WEP/Other_Enc') # WEP or some other encrypted if no WPA/RSN
+                         features['auth_schemes'].add('WEP/Other_Enc')
                 else:
-                     # If no encryption bits set and no WPA/RSN found, assume Open
                      if not features['auth_schemes']:
                           features['auth_schemes'].add('Open')
 
@@ -342,7 +339,6 @@ def get_packet_features(pkt):
     # Handle case where no auth info found at all
     if not features['auth_schemes']:
         features['auth_schemes'].add("Unknown")
-
 
     return features
 
