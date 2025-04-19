@@ -164,7 +164,7 @@ def parse_airodump_csv(csv_path):
                 if line.startswith("BSSID,"):
                     in_ap_section = True; header = [h.strip() for h in line.split(',')]
                     # Standardize headers that might vary
-                    header = [h.replace(' # beacons', '#Beacons') for h in header]
+                    header = [h.replace('# beacons', '#Beacons') for h in header]
                     header = [h.replace(' PWR', 'Power') for h in header]
                     header = [h if h != 'channel' else 'CH' for h in header] # Standardize channel
                     continue
