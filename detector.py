@@ -626,14 +626,12 @@ def run_profiling(iface, target_ssids, duration):
 
     try:
         while time.time() - start_time < duration:
-            print(f"\nStarting new profiling cycle...")
             for channel in channels_to_scan:
-                if time.time() - start_time >= duration:
-                    print("Profiling duration reached. Stopping...")
-                    break
                 set_channel(iface, channel) # Set the channel for sniffing
-            if time.time() - start_time >= duration:
-                break
+                print(f"Sniffing on channel {channel}...")
+                # Sniff packets for a short duration on this channel
+                scapy.sniff(iface=iface, prn=handler, timeout=channel_hop_delay, store=False, count=0)
+            break # Break after one full channel scan to avoid infinite loop
         
     except OSError as e:
          print(f"Error sniffing: {e}. Do you have permissions (root)? Is the interface correct ('{iface}') and in monitor mode?")
