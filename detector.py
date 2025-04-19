@@ -608,7 +608,7 @@ def run_profiling(iface, target_ssids, duration):
     print(f"Total profiling duration: {duration} seconds")
 
     # Get channel list from config
-    channels_to_scan = config['monitoring']['channels_to_scan']
+    channels_to_scan = config['general']['channels_to_scan']
 
     if not channels_to_scan:
         print("Error: No channels specified in config 'monitoring.channels_to_scan'. Cannot perform profiling.")
