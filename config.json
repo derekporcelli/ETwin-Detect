@@ -1,21 +1,13 @@
 {
-    "general": {
+  "general": {
       "interface": "wlan0",
-      "db_name": "ap_profile.db",
-      "channel_hop_delay": 15,
-      "channels_to_scan": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    },
-    "profiling": {
-      "duration_seconds": 170,
+      "db_name": "ap_profiles_airodump.db",
+      "channels_to_scan": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], 
+      "temp_dir": "/tmp/airodump_profiling"
+  },
+  "profiling": {
+      "dwell_time_ms": 5000,
+      "scan_cycles": 1,
       "target_ssids": ["malmalmal"]
-    },
-    "monitoring": {
-      "target_ssids": ["malmalmal"],
-      "enable_deauth_prompt": false,
-      "blacklist_check_interval_seconds": 30
-    },
-    "anomaly_thresholds": {
-      "signal_strength_dbm_diff": 15,
-      "beacon_interval_ms_diff": 10
-    }
+  }
 }
