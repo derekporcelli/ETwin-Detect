@@ -2,7 +2,7 @@
     "general": {
       "interface": "wlan0",
       "db_name": "ap_profile.db",
-      "channel_hop_delay_seconds": 0.5,
+      "channel_hop_delay": 0.5,
       "channels_to_scan": [1, 6, 11, 36, 40, 44, 48, 149, 153, 157, 161]
     },
     "profiling": {

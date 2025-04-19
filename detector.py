@@ -17,7 +17,7 @@ CONFIG_DEFAULTS = {
     "general": {
         "interface": "wlan0",
         "db_name": "ap_profile.db",
-        "channel_hop_delay_seconds": 0.5,
+        "channel_hop_delay": 0.5,
         "channels_to_scan": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
     },
     "profiling": {
@@ -749,7 +749,7 @@ def run_monitoring(iface, target_ssids, enable_deauth):
     print("Starting packet sniffing for monitoring... Press Ctrl+C to stop.")
     last_blacklist_check = time.time()
     blacklist_check_interval = config['monitoring']['blacklist_check_interval_seconds']
-    channel_hop_delay = config['general']['channel_hop_delay_seconds']
+    channel_hop_delay = config['general']['channel_hop_delay']
     channels_to_scan = config['general']['channels_to_scan']
 
 
