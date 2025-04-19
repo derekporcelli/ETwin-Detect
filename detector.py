@@ -601,51 +601,73 @@ def send_deauth(iface, target_bssid, target_client='ff:ff:ff:ff:ff:ff', count=10
 # --- Main Execution ---
 
 def run_profiling(iface, target_ssids, duration):
-    """Runs the profiling phase."""
-    print(f"\n--- Starting Profiling Phase ---")
+    """Runs the profiling phase, dividing total duration equally among channels."""
+    print(f"\n--- Starting Profiling Phase (Equal Time Per Channel) ---")
     print(f"Target SSIDs: {', '.join(target_ssids)}")
     print(f"Sniffing on interface: {iface}")
-    print(f"Profiling duration: {duration} seconds")
-    print("Capturing baseline data for legitimate APs...")
+    print(f"Total profiling duration: {duration} seconds")
 
-    channels_to_scan = config['general']['channels_to_scan']
-    channel_hop_delay = config['general']['channel_hop_delay']
+    # Get channel list from config
+    channels_to_scan = config['monitoring']['channels_to_scan']
 
     if not channels_to_scan:
-        print("No channels specified for profiling. Please check your configuration.")
+        print("Error: No channels specified in config 'monitoring.channels_to_scan'. Cannot perform profiling.")
         return
-    if channel_hop_delay <= 0:
-        print("Invalid channel hop delay specified. Please check your configuration.")
+
+    num_channels = len(channels_to_scan)
+    if duration <= 0 or num_channels <= 0:
+        print("Error: Profiling duration and number of channels must be positive.")
         return
+
+    # Calculate time to spend on each channel
+    time_per_channel = duration / num_channels
+    # Optional: Set a minimum time per channel if calculated time is too low
+    min_time_per_channel = 2.0 # Example: At least 2 seconds per channel
+    if time_per_channel < min_time_per_channel:
+       print(f"Warning: Calculated time per channel ({time_per_channel:.2f}s) is low.")
+       print(f"Consider increasing total duration or reducing channels for better profiling.")
+    #    # Decide whether to use the low value or enforce minimum (enforcing might exceed total duration)
+    #    # For now, we'll just use the calculated value.
+
+    print(f"Scanning channels: {', '.join(map(str, channels_to_scan))}")
+    print(f"Allocated time per channel: {time_per_channel:.2f} seconds")
+    print("Capturing baseline data for legitimate APs...")
 
     global profiling_data_store
     profiling_data_store.clear() # Clear previous data
 
     handler = packet_handler_profiling(target_ssids)
-    start_time = time.time()
+    start_time = time.time() # Record start time for total duration reporting
 
     try:
-        while time.time() - start_time < duration:
-            for channel in channels_to_scan:
-                set_channel(iface, channel) # Set the channel for sniffing
-                print(f"Sniffing on channel {channel}...")
-                # Sniff packets for a short duration on this channel
-                scapy.sniff(iface=iface, prn=handler, timeout=channel_hop_delay, store=False, count=0)
-            break # Break after one full channel scan to avoid infinite loop
-        
+        for i, channel in enumerate(channels_to_scan):
+            print(f"\nScanning Channel {channel} ({i+1}/{num_channels}) for ~{time_per_channel:.2f} seconds...")
+            set_channel(iface, channel)
+
+            # Sniff on the current channel for the calculated duration portion
+            scapy.sniff(iface=iface, prn=handler, timeout=time_per_channel, store=False)
+
     except OSError as e:
-         print(f"Error sniffing: {e}. Do you have permissions (root)? Is the interface correct ('{iface}') and in monitor mode?")
+         print(f"\nError sniffing on channel {channel}: {e}. Do you have permissions (root)? Is the interface correct ('{iface}') and in monitor mode?")
+         # Continue to next channel or stop? Let's stop profiling on error.
          return
+    except KeyboardInterrupt:
+         print("\nProfiling interrupted by user (Ctrl+C). Processing data collected so far...")
+         # Allow processing of data collected up to this point
     except Exception as e:
-         print(f"An unexpected error occurred during sniffing: {e}")
+         print(f"\nAn unexpected error occurred during profiling sniffing: {e}")
+         import traceback
+         traceback.print_exc()
+         # Stop profiling on unexpected error
          return
 
-
-    print("\n--- Profiling Complete ---")
+    print("\n--- Profiling Scan Complete ---")
+    actual_duration = time.time() - start_time
+    print(f"Total time spent: {actual_duration:.1f} seconds (Target: {duration}s)")
     print("Processing collected data...")
 
     if not profiling_data_store:
-        print("No beacon/probe response frames captured for the target SSIDs. Ensure you are in range and the SSIDs are active.")
+        print("No beacon/probe response frames captured for the target SSIDs. Ensure you are in range, the SSIDs are active, and the channels are correct.")
         return
 
     for bssid, data in profiling_data_store.items():
