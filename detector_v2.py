@@ -309,7 +309,10 @@ def run_profiling(iface):
     # --- Aggregate data per BSSID from the filtered DataFrame ---
     aggregated_results = defaultdict(lambda: {
         'ssid': None, 'rssi_values': [], 'channel_rssi': defaultdict(list),
-        'beacons_total': 0, 'privacy_strings': set()
+        'beacons_total': 0,
+        'privacy_raw_values': set(), # Collect unique raw strings
+        'cipher_raw_values': set(),
+        'authentication_raw_values': set()
     })
 
     print(target_ap_df) # Debug
