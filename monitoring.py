@@ -10,11 +10,6 @@ class Monitor:
         # Save original mode to revert later
         self.original_mode = self._get_current_mode()
 
-        # AP lists
-        self.whitelist = whitelist or set()  # TODO: populate whitelist of known SSIDs
-        self.blacklist = set()              # TODO: store blacklisted BSSIDs
-        self.seen_bssids = set()            # Track seen BSSIDs for logic
-
         # Anomaly detection
         self.anomaly_detector = anomaly_detector or anomaly_detection.AnomalyDetector(self)
 

