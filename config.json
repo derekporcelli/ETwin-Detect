@@ -1,0 +1,21 @@
+{
+    "general": {
+      "interface": "wlan1",
+      "db_name": "ap_profile.db"
+    },
+    "profiling": {
+      "duration_seconds": 60,
+      "target_ssids": ["MyHomeWiFi", "MyGuestWiFi", "Eduroam"]
+    },
+    "monitoring": {
+      "target_ssids": ["MyHomeWiFi", "MyGuestWiFi", "Eduroam"],
+      "enable_deauth_prompt": false,
+      "channel_hop_delay_seconds": 0.5,
+      "channels_to_scan": [1, 6, 11, 36, 40, 44, 48, 149, 153, 157, 161],
+      "blacklist_check_interval_seconds": 30
+    },
+    "anomaly_thresholds": {
+      "signal_strength_dbm_diff": 15,
+      "beacon_interval_ms_diff": 10
+    }
+  }
