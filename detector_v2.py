@@ -88,43 +88,17 @@ def set_monitor_mode(iface, enable=True):
             subprocess.run(['airmon-ng', 'check', 'kill'], check=True, capture_output=True, timeout=15)
             print("Interfering processes check/kill executed.")
 
-        proc = subprocess.run(['airmon-ng', action, iface], check=True, capture_output=True, text=True, timeout=15)
+            proc = subprocess.run(['airmon-ng', action, iface], check=True, capture_output=True, text=True, timeout=15)
 
-        if enable:
-            lines = proc.stdout.splitlines()
-            patterns = ["monitor mode enabled on", "monitor mode vif enabled for", "monitor interface created:"]
-            for line in lines:
-                for pattern in patterns:
-                    if pattern in line:
-                        parts = line.split()
-                        potential_iface = parts[-1].strip('[]()')
-                        if potential_iface and os.path.exists(f"/sys/class/net/{potential_iface}"):
-                           monitor_iface_name = potential_iface
-                           break
-                if monitor_iface_name: break
+            monitor_iface_active = f"{iface}mon"
+            subprocess.run(['ip', 'link', 'set', monitor_iface_name, 'up'], check=True, capture_output=True, timeout=5)
+            print(f"Interface {monitor_iface_name} brought up.")
+            return monitor_iface_active
 
-            if monitor_iface_name:
-                print(f"Monitor mode enabled on interface: {monitor_iface_name}")
-                try:
-                    subprocess.run(['ip', 'link', 'set', monitor_iface_name, 'up'], check=True, capture_output=True, timeout=5)
-                    print(f"Interface {monitor_iface_name} brought up.")
-                except Exception as ip_err: print(f"Warning: Failed to bring up {monitor_iface_name}: {ip_err}")
-                return monitor_iface_name
-            else:
-                 print("Warning: Could not detect monitor interface name. Checking original interface.")
-                 try:
-                    iwconfig_proc = subprocess.run(['iwconfig', iface], check=True, capture_output=True, text=True, timeout=5)
-                    if "Mode:Monitor" in iwconfig_proc.stdout:
-                        print(f"Using '{iface}' in monitor mode.")
-                        subprocess.run(['ip', 'link', 'set', iface, 'up'], check=True, capture_output=True, timeout=5)
-                        return iface
-                    else: print(f"Error: Failed to confirm monitor mode on '{iface}'."); return None
-                 except Exception as check_err: print(f"Error confirming monitor status: {check_err}"); return None
         else: # Disabling
-            print(f"Monitor mode stop command executed for {iface}.")
-            try:
-                print("Attempting to restart NetworkManager..."); subprocess.run(['systemctl', 'restart', 'NetworkManager'], check=False, capture_output=True, timeout=15)
-            except FileNotFoundError: print("systemctl not found, skipping NetworkManager restart.")
+            print(f"Monitor mode stop command executed for {iface}mon.")
+            subprocess.run(['airmon-ng', 'stop', f"{iface}mon"], check=False, capture_output=True, timeout=15)
+            print("Attempting to restart NetworkManager..."); subprocess.run(['systemctl', 'restart', 'NetworkManager'], check=False, capture_output=True, timeout=15)
             return iface
 
     except subprocess.CalledProcessError as e: print(f"Error airmon-ng: {e.stderr}"); return None
@@ -473,12 +447,11 @@ if __name__ == "__main__":
             import traceback; traceback.print_exc()
         finally:
             # Cleanup logic
-            iface_to_stop = monitor_iface_active if monitor_iface_active else original_iface
-            if monitor_iface_active:
-                 print(f"\nCleaning up: Disabling monitor mode on {iface_to_stop}...")
-                 try:
-                    set_monitor_mode(iface_to_stop, enable=False)
-                 except Exception as cleanup_err: print(f"Error during monitor mode cleanup: {cleanup_err}")
+            iface_to_stop = monitor_iface_active
+            print(f"\nCleaning up: Disabling monitor mode on {iface_to_stop}...")
+            try:
+                set_monitor_mode(iface_to_stop, enable=False)
+            except Exception as cleanup_err: print(f"Error during monitor mode cleanup: {cleanup_err}")
 
             temp_dir = config['general']['temp_dir']
             if os.path.exists(temp_dir):
