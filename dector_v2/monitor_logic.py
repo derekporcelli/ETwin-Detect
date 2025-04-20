@@ -306,7 +306,7 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
         state["last_alert_time"]   = now
 
         # Optional: clear history if you want per-interval (non-sliding) rate
-        # state["beacon_timestamps"].clear()
+        state["beacon_timestamps"].clear()
 
 
 def scapy_monitor_handler(pkt):

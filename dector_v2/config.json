@@ -21,6 +21,6 @@
       "alert_cooldown_seconds": 5,
       "rssi_window_size": 20,    
       "beacon_time_window": 10,
-      "beacon_rate_check_interval": 30
+      "beacon_rate_check_interval": 10
   }
 }
