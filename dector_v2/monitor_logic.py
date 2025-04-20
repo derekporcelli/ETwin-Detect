@@ -59,7 +59,7 @@ def extract_rssi(pkt):
     return getattr(pkt[RadioTap], "dBm_AntSignal", None)
 
 
-def extract_channel(pkt):
+def extract_channel_pre(pkt):
     """
     Return channel number via RadioTap freq or DS Parameter Set,
     or None if unknown.
@@ -93,6 +93,15 @@ def extract_channel(pkt):
                 break
 
     return None
+
+def extract_channel(pkt):
+    frequency = pkt[RadioTap].Channel
+    base = 2407              # 2.4Ghz - scope of this project
+    ch = frequency-base//5
+    if isinstance(ch, int):
+            return ch
+    return None
+
 
 
 def extract_ssid(pkt):
