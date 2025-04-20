@@ -15,7 +15,7 @@ import sqlite3
 import re
 import shutil # For removing temp directory
 from collections import defaultdict
-import scapy.all as scapy
+import monitor_logic
 
 # --- Configuration Loading ---
 CONFIG_DEFAULTS = {
@@ -29,7 +29,17 @@ CONFIG_DEFAULTS = {
         "dwell_time_ms": 5000, # Stay 5 seconds on each channel
         "scan_cycles": 1,      # Perform 1 full cycle through channels
         "target_ssids": ['malmalmal']     # Must be specified in config file - used for filtering AFTER scan
-    }
+    },
+    "monitoring": { 
+        "target_ssids": [], 
+        "scan_dwell_seconds": 2, 
+        "rssi_threshold_stdev": 3.0, 
+        "rssi_threshold_dbm_abs": 20, 
+        "rssi_spread_stdev_threshold": 10.0, 
+        "rssi_spread_range_threshold": 25.0, 
+        "beacon_rate_threshold_percent": 50.0, 
+        "alert_cooldown_seconds": 60 
+        }
 }
 
 def load_config(filepath):
@@ -315,7 +325,7 @@ def run_profiling(iface):
         'authentication_raw_values': set()
     })
 
-    print(target_ap_df) # Debug
+    # print(target_ap_df) # Debug
 
     for index, row in target_ap_df.iterrows():
         bssid = row.get('BSSID');
@@ -327,7 +337,7 @@ def run_profiling(iface):
         authentication_raw = row.get('Authentication', '').strip()
         channel = row.get('CH') # Use standardized name
 
-        print(f"Debug: beacons: {beacons}")
+        # print(f"Debug: beacons: {beacons}")
 
         if not aggregated_results[bssid]['ssid'] and ssid: aggregated_results[bssid]['ssid'] = ssid
         if pd.notna(power) and -99 <= power < 0:
@@ -382,50 +392,124 @@ def run_profiling(iface):
 
 # --- Main Execution Block ---
 if __name__ == "__main__":
-    # *** UPDATED ARGUMENT PARSING ***
-    parser = argparse.ArgumentParser(description="AP Profiling Tool using a single airodump-ng scan")
-    parser.add_argument("-c", "--config", default="config.json",
-                        help="Path to the configuration file (default: config.json)")
-    parser.add_argument("-f", "--profile", action="store_true",
-                        help="Run the AP profiling process.") # Changed 'f' to '--profile', added action
-
+    parser = argparse.ArgumentParser(
+        description="AP Profiling (airodump) and Monitoring (Scapy) Tool"
+    )
+    parser.add_argument(
+        "-c", "--config",
+        default="config.json",
+        help="Path to config file"
+    )
+    parser.add_argument(
+        "-f", "--profile",
+        action="store_true",
+        help="Run AP profiling (airodump-ng)."
+    )
+    parser.add_argument(
+        "-m", "--monitor",
+        action="store_true",
+        help="Run AP monitoring (Scapy)."
+    )
     args = parser.parse_args()
-    config = load_config(args.config) # Load config globally
 
-    # *** EXECUTION CONDITIONED ON THE FLAG ***
-    if args.profile:
-        if os.geteuid() != 0: print("Error: Root privileges required."); sys.exit(1)
+    # Load configuration
+    config = load_config(args.config)
 
-        init_db()
-        monitor_iface_active = None
-        original_iface = config['general']['interface']
+    # Validate mutually exclusive modes
+    if args.profile and args.monitor:
+        print("Error: Cannot run --profile and --monitor simultaneously.")
+        sys.exit(1)
 
-        try:
-            print("Profile flag detected, starting profiling process...")
-            monitor_iface_active = set_monitor_mode(original_iface, enable=True)
-            if not monitor_iface_active: raise RuntimeError(f"Failed to enable monitor mode on {original_iface}.")
+    if not args.profile and not args.monitor:
+        print("Error: Use --profile or --monitor.")
+        parser.print_help()
+        sys.exit(1)
 
-            run_profiling(monitor_iface_active) # Call the main profiling function
+    # Ensure we have root
+    if os.geteuid() != 0:
+        print("Error: Root privileges required.")
+        sys.exit(1)
 
-        except Exception as e:
-            print(f"\nAn error occurred during profiling: {e}")
-            import traceback; traceback.print_exc()
-        finally:
-            # Cleanup logic
+    # Initialize database
+    init_db()
+
+    # Prepare interface variables
+    monitor_iface_active = None
+    original_iface = config["general"]["interface"]
+    mode_failed = False
+
+    try:
+        # Enable monitor mode
+        print(f"Attempting to enable monitor mode on {original_iface}...")
+        monitor_iface_active = set_monitor_mode(
+            iface=original_iface,
+            enable=True
+        )
+
+        if not monitor_iface_active:
+            raise RuntimeError(
+                f"Failed to enable monitor mode on {original_iface}."
+            )
+
+        print(f"Monitor mode appears active on {monitor_iface_active}")
+
+        # Profiling or Monitoring
+        if args.profile:
+            print("Starting profiling process (airodump-ng)...")
+            run_profiling(monitor_iface_active)
+
+        elif args.monitor:
+            print("Starting monitoring process (Scapy)...")
+            target_ssids_mon = config["monitoring"]["target_ssids"]
+            baseline_profiles, known_bssids = monitor_logic.load_baseline(
+                target_ssids_mon
+            )
+
+            if baseline_profiles is None:
+                print("Cannot start monitoring without baseline profiles.")
+                raise ValueError("Baseline loading failed")
+
+            monitor_logic.run_monitoring(
+                iface=monitor_iface_active,
+                config=config,
+                baseline_profiles=baseline_profiles,
+                known_bssids=known_bssids
+            )
+
+    except Exception as e:
+        print(f"\nAn error occurred in main execution: {e}")
+        import traceback
+        traceback.print_exc()
+        mode_failed = True
+
+    finally:
+        # Determine which interface to disable
+        if monitor_iface_active:
             iface_to_stop = monitor_iface_active
+        else:
+            iface_to_stop = original_iface
+
+        # Disable monitor mode if it was enabled
+        if monitor_iface_active:
             print(f"\nCleaning up: Disabling monitor mode on {iface_to_stop}...")
             try:
-                set_monitor_mode(iface_to_stop, enable=False)
-            except Exception as cleanup_err: print(f"Error during monitor mode cleanup: {cleanup_err}")
+                set_monitor_mode(iface=iface_to_stop, enable=False)
+            except Exception as cleanup_err:
+                print(f"Error during monitor mode cleanup: {cleanup_err}")
 
-            temp_dir = config['general']['temp_dir']
-            if os.path.exists(temp_dir):
-                try: shutil.rmtree(temp_dir)
-                except Exception: pass # Ignore cleanup error here
-            print("Exiting Profiling Tool.")
+        elif not mode_failed and (args.profile or args.monitor):
+            print(
+                "\nMonitor mode interface name unknown or setup failed, "
+                "skipping automatic disable."
+            )
 
-    else:
-        # If -f/--profile flag was not provided
-        print("Usage: sudo python3 your_script_name.py --profile [-c config.json]")
-        parser.print_help()
-        sys.exit(0)
+        # Clean up profiling temp directory
+        if args.profile:
+            temp_dir_prof = config["general"]["temp_dir"]
+            if os.path.exists(temp_dir_prof):
+                try:
+                    shutil.rmtree(temp_dir_prof)
+                except Exception:
+                    pass
+
+        print("Exiting Tool.")
