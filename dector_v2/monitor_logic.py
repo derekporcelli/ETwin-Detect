@@ -324,7 +324,6 @@ def scapy_monitor_handler(pkt):
     abs_thresh    = cfg.get("rssi_threshold_dbm_abs", RSSI_ABS_THRESH_DEFAULT)
     cooldown      = cfg.get("alert_cooldown_seconds", ALERT_COOLDOWN_DEFAULT)
 
-    print(cooldown) # debug
     # Only handle Beacon or ProbeResp frames
     if not (pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp)):
         return
@@ -352,6 +351,7 @@ def scapy_monitor_handler(pkt):
     # 1) Unknown‐BSSID check
     if bssid not in known:
         last = state["last_alert_time"]
+        print(last) # debug
         key  = "new_bssid"
         if not state["alert_states"][key] and (now - last) > cooldown:
             generate_alert(
