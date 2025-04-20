@@ -18,7 +18,7 @@
       "rssi_spread_stdev_threshold": 10.0,
       "rssi_spread_range_threshold": 25.0,
       "beacon_rate_threshold_percent": 50.0,
-      "alert_cooldown_seconds": 60,
+      "alert_cooldown_seconds": 5,
       "rssi_window_size": 20,    
       "beacon_time_window": 30,
       "beacon_rate_check_interval": 10
