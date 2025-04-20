@@ -277,6 +277,7 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
     if now - last_check < rate_interval:
         return
 
+    print("checked") # debug
     state["last_beacon_rate_check"] = now
 
     base_rate = baseline.get("avg_beacon_rate")
