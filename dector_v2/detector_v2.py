@@ -519,7 +519,7 @@ if __name__ == "__main__":
 
             monitor_logic.run_monitoring(
                 iface=monitor_iface_active,
-                config=config,
+                config_dict=config,
                 baseline_profiles=baseline_profiles,
                 known_bssids=known_bssids
             )
