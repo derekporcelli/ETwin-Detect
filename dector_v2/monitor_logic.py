@@ -365,7 +365,6 @@ def scapy_monitor_handler(pkt):
             )
             state["alert_states"][key]     = True
             state["last_alert_time"]       = now
-        return
 
     if not baseline:
         return
