@@ -511,7 +511,7 @@ if __name__ == "__main__":
         elif args.monitor:
             print("Starting monitoring process (Scapy)...")
             target_ssids_mon = config["monitoring"]["target_ssids"]
-            baseline_profiles, known_bssids = monitor_logic.load_baseline(target_ssids_mon)
+            baseline_profiles, known_bssids = load_baseline(target_ssids_mon)
 
             if baseline_profiles is None:
                 print("Cannot start monitoring without baseline profiles.")
