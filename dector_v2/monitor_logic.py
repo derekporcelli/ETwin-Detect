@@ -68,7 +68,7 @@ def extract_channel(pkt):
         rt = pkt[RadioTap]
         freq = getattr(rt, "ChannelFrequency", None)
 
-        return int((freq - 2407) // 5)
+        return int((freq - 2407) // 5) + 1
 
     if pkt.haslayer(Dot11Elt):
         elt = pkt.getlayer(Dot11Elt)
