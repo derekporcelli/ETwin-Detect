@@ -25,15 +25,13 @@ CONFIG_DEFAULTS = {
     "general": {
         "interface": "wlan0",
         "db_name": "ap_profiles_airodump.db",
-        "channels_to_scan": [
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
-        ],
-        "temp_dir": "/tmp/airodump_profiling"
+        "channels_to_scan": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "temp_dir": "/tmp/airodump_profiling",
     },
     "profiling": {
         "dwell_time_ms": 5000,
         "scan_cycles": 1,
-        "target_ssids": ["malmalmal"]
+        "target_ssids": ["malmalmal"],
     },
     "monitoring": {
         "target_ssids": ["malmalmal"],
@@ -43,8 +41,8 @@ CONFIG_DEFAULTS = {
         "rssi_spread_stdev_threshold": 10.0,
         "rssi_spread_range_threshold": 25.0,
         "beacon_rate_threshold_percent": 50.0,
-        "alert_cooldown_seconds": 60
-    }
+        "alert_cooldown_seconds": 60,
+    },
 }
 
 
@@ -115,11 +113,7 @@ def set_monitor_mode(iface, enable=True):
     Returns the new interface name on success, or None on failure.
     """
     try:
-        subprocess.run(
-            ["which", "airmon-ng"],
-            check=True,
-            capture_output=True
-        )
+        subprocess.run(["which", "airmon-ng"], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("Error: 'airmon-ng' not found; install aircrack-ng suite.")
         return None
@@ -131,14 +125,14 @@ def set_monitor_mode(iface, enable=True):
                 ["airmon-ng", "check", "kill"],
                 check=True,
                 capture_output=True,
-                timeout=15
+                timeout=15,
             )
             result = subprocess.run(
                 ["airmon-ng", "start", iface],
                 check=True,
                 capture_output=True,
                 text=True,
-                timeout=15
+                timeout=15,
             )
         except subprocess.CalledProcessError as e:
             print(f"Error enabling monitor mode: {e.stderr}")
@@ -158,7 +152,7 @@ def set_monitor_mode(iface, enable=True):
                 ["airmon-ng", "stop", iface],
                 check=False,
                 capture_output=True,
-                timeout=15
+                timeout=15,
             )
         except subprocess.TimeoutExpired:
             print("Warning: airmon-ng stop command timed out.")
@@ -168,7 +162,7 @@ def set_monitor_mode(iface, enable=True):
                 ["systemctl", "start", "NetworkManager"],
                 check=False,
                 capture_output=True,
-                timeout=15
+                timeout=15,
             )
         except Exception:
             print("Warning: could not restart NetworkManager.")
@@ -233,8 +227,8 @@ def add_to_whitelist(profile_data):
             profile_data["cipher_raw"],
             profile_data["authentication_raw"],
             profile_data["avg_beacon_rate"],
-            profile_data["profiled_time"]
-        )
+            profile_data["profiled_time"],
+        ),
     )
 
     conn.commit()
@@ -320,16 +314,14 @@ def load_baseline(target_ssids):
         print(f"Warning: No baseline profiles for SSIDs: {', '.join(target_ssids)}")
         return None, None
 
-    for (ssid, bssid, chan, avg_r, std_r, priv, ciph, auth, avg_br) in rows:
+    for ssid, bssid, chan, avg_r, std_r, priv, ciph, auth, avg_br in rows:
         b_lower = bssid.lower()
 
         privacy_set = {priv} if priv else set()
         cipher_set = {ciph} if ciph else set()
         auth_set = {auth} if auth else set()
 
-        auth_type, cipher = parse_auth_details(
-            privacy_set, cipher_set, auth_set
-        )
+        auth_type, cipher = parse_auth_details(privacy_set, cipher_set, auth_set)
 
         profile = {
             "ssid": ssid,
@@ -338,15 +330,14 @@ def load_baseline(target_ssids):
             "stddev_rssi": std_r,
             "auth_type": auth_type,
             "cipher": cipher,
-            "avg_beacon_rate": avg_br
+            "avg_beacon_rate": avg_br,
         }
 
         baseline_profiles[b_lower] = profile
         known_per_ssid[ssid].add(b_lower)
 
     print(
-        f"Loaded {len(baseline_profiles)} profiles "
-        f"for {len(known_per_ssid)} SSIDs."
+        f"Loaded {len(baseline_profiles)} profiles " f"for {len(known_per_ssid)} SSIDs."
     )
 
     return baseline_profiles, known_per_ssid
@@ -371,16 +362,10 @@ def parse_airodump_csv(csv_path):
                     in_ap = True
                     header = [h.strip() for h in line.split(",")]
                     # standardize header names
-                    header = [
-                        h.replace("# beacons", "#Beacons")
-                        for h in header
-                    ]
+                    header = [h.replace("# beacons", "#Beacons") for h in header]
                     header = [h.replace(" PWR", "Power") for h in header]
                     # rename 'channel' to 'CH'
-                    header = [
-                        "CH" if h == "channel" else h
-                        for h in header
-                    ]
+                    header = ["CH" if h == "channel" else h for h in header]
                     continue
 
                 if line.startswith("Station MAC,"):
@@ -389,10 +374,7 @@ def parse_airodump_csv(csv_path):
                 if in_ap:
                     parts = line.split(",", maxsplit=len(header) - 1)
                     if len(parts) == len(header):
-                        entry = {
-                            key: val.strip()
-                            for key, val in zip(header, parts)
-                        }
+                        entry = {key: val.strip() for key, val in zip(header, parts)}
                         data.append(entry)
 
         if not data:
@@ -445,12 +427,17 @@ def run_profiling(iface):
 
     cmd = [
         "airodump-ng",
-        "--write", prefix,
-        "-c", ",".join(map(str, channels)),
-        "-f", str(dwell_ms),
-        "--write-interval", "1",
-        "--output-format", "csv",
-        iface
+        "--write",
+        prefix,
+        "-c",
+        ",".join(map(str, channels)),
+        "-f",
+        str(dwell_ms),
+        "--write-interval",
+        "1",
+        "--output-format",
+        "csv",
+        iface,
     ]
 
     print(f"Running: {' '.join(cmd)}")
@@ -461,10 +448,7 @@ def run_profiling(iface):
     start = time.time()
     try:
         process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            preexec_fn=os.setsid
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=os.setsid
         )
 
         end = start + total
@@ -518,15 +502,17 @@ def run_profiling(iface):
     print(f"Found {len(df)} AP entries.")
 
     # aggregate
-    agg = defaultdict(lambda: {
-        "ssid": None,
-        "rssi": [],
-        "channels": defaultdict(list),
-        "beacons": 0,
-        "privacy": set(),
-        "cipher": set(),
-        "auth": set()
-    })
+    agg = defaultdict(
+        lambda: {
+            "ssid": None,
+            "rssi": [],
+            "channels": defaultdict(list),
+            "beacons": 0,
+            "privacy": set(),
+            "cipher": set(),
+            "auth": set(),
+        }
+    )
 
     for _, row in df.iterrows():
         b = row["BSSID"]
@@ -570,8 +556,11 @@ def run_profiling(iface):
 
         if data["rssi"]:
             avg_rssi = round(statistics.mean(data["rssi"]), 2)
-            std_rssi = (round(statistics.stdev(data["rssi"]), 2)
-                        if len(data["rssi"]) > 1 else 0.0)
+            std_rssi = (
+                round(statistics.stdev(data["rssi"]), 2)
+                if len(data["rssi"]) > 1
+                else 0.0
+            )
         else:
             avg_rssi = None
             std_rssi = None
@@ -600,7 +589,7 @@ def run_profiling(iface):
             "cipher_raw": cip,
             "authentication_raw": auth,
             "avg_beacon_rate": rate,
-            "profiled_time": now
+            "profiled_time": now,
         }
 
         print(
@@ -621,24 +610,12 @@ def run_profiling(iface):
 
 # --- Main Execution ---
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="AP Profiling & Monitoring Tool"
-    )
+    parser = argparse.ArgumentParser(description="AP Profiling & Monitoring Tool")
     parser.add_argument(
-        "-c", "--config",
-        default="config.json",
-        help="Config file path"
+        "-c", "--config", default="config.json", help="Config file path"
     )
-    parser.add_argument(
-        "-f", "--profile",
-        action="store_true",
-        help="Run profiling"
-    )
-    parser.add_argument(
-        "-m", "--monitor",
-        action="store_true",
-        help="Run monitoring"
-    )
+    parser.add_argument("-f", "--profile", action="store_true", help="Run profiling")
+    parser.add_argument("-m", "--monitor", action="store_true", help="Run monitoring")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -677,10 +654,7 @@ if __name__ == "__main__":
                 raise RuntimeError("No baseline profiles.")
 
             monitor_logic.run_monitoring(
-                iface=monitor_iface,
-                config=config,
-                profiles=profiles,
-                known=known
+                iface=monitor_iface, config=config, profiles=profiles, known=known
             )
 
     except Exception as e:
@@ -693,4 +667,4 @@ if __name__ == "__main__":
         elif not failed:
             print("Skipping monitor-mode disable (none active).")
 
-    print("Exiting.")  
+    print("Exiting.")
