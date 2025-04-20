@@ -134,7 +134,9 @@ def parse_auth(pkt):
     cipher = set()
     auth = set()
 
-    for elt in pkt.getlayer(Dot11Elt),:
+    print(pkt.getlayer(Dot11Elt)) # for debug
+
+    for elt in pkt.getlayer(Dot11Elt):
         if elt.ID == 48:
             privacy.add("WPA2")
         if elt.ID == 221:
