@@ -68,13 +68,7 @@ def extract_channel(pkt):
         rt = pkt[RadioTap]
         freq = getattr(rt, "ChannelFrequency", None)
 
-        if freq and 2412 <= freq <= 2484:
-            # 2.4 GHz
-            return int((freq - 2412) / 5) + 2
-
-        ch = getattr(rt, "Channel", None)
-        if isinstance(ch, int):
-            return ch
+        return int((freq - 2407) // 5)
 
     if pkt.haslayer(Dot11Elt):
         elt = pkt.getlayer(Dot11Elt)
