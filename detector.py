@@ -16,18 +16,18 @@ import json
 CONFIG_DEFAULTS = {
     "general": {
         "interface": "wlan0",
-        "db_name": "ap_profile.db",
-        "channel_hop_delay": 15,
-        "channels_to_scan": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        "db_name": "ap_profile.db"
     },
     "profiling": {
-        "duration_seconds": 170,
+        "duration_seconds": 60,
         "target_ssids": []
     },
     "monitoring": {
         "target_ssids": [],
         "enable_deauth_prompt": False,
-        "blacklist_check_interval_seconds": 30
+        "channel_hop_delay_seconds": 0.5,
+        "channels_to_scan": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+         "blacklist_check_interval_seconds": 30
     },
     "anomaly_thresholds": {
         "signal_strength_dbm_diff": 15,
@@ -180,8 +180,6 @@ def get_blacklist():
     return results
 
 # --- Network Interface Management ---
-# (set_monitor_mode, set_channel - functions remain the same)
-# ... (copy from previous version) ...
 def set_monitor_mode(iface, enable=True):
     """Enables or disables monitor mode using airmon-ng (adjust for other tools/OS)."""
     action = "start" if enable else "stop"
@@ -222,16 +220,16 @@ def set_monitor_mode(iface, enable=True):
 
 
         # Bring the interface up (optional but sometimes needed)
-        # if enable:
-        #     subprocess.run(['ip', 'link', 'set', monitor_iface, 'up'], check=True)
-        # else:
-        #      # Optionally restart network manager
-        #      subprocess.run(['systemctl', 'start', 'NetworkManager'], check=False)
+        if enable:
+            subprocess.run(['ip', 'link', 'set', monitor_iface, 'up'], check=True)
+        else:
+             # Optionally restart network manager
+            subprocess.run(['systemctl', 'start', 'NetworkManager'], check=False)
         print(f"Monitor mode command {'executed' if enable else 'executed'} successfully.") # Adjusted message as direct confirmation is tricky
         return monitor_iface if enable else iface
     except subprocess.CalledProcessError as e:
         print(f"Error setting monitor mode: {e}")
-        print(f"Stderr: {e}")
+        print(f"Stderr: {e.stderr.decode()}")
         sys.exit(1)
     except FileNotFoundError:
         print("Error: 'airmon-ng' (or 'ip') command not found. Is aircrack-ng suite installed and in PATH?")
@@ -240,9 +238,9 @@ def set_monitor_mode(iface, enable=True):
 def set_channel(iface, channel):
     """Sets the channel for the specified interface."""
     try:
-        # print(f"Setting {iface} to channel {channel}...")
+        print(f"Setting {iface} to channel {channel}...")
         subprocess.run(['iwconfig', iface, 'channel', str(channel)], check=True, capture_output=True)
-        # time.sleep(0.1) # Small delay to allow channel change
+        time.sleep(0.1) # Small delay to allow channel change
     except subprocess.CalledProcessError as e:
         print(f"Error setting channel {channel} on {iface}: {e}")
         # Don't print stderr noise unless debugging: print(f"Stderr: {e.stderr.decode()}")
@@ -252,9 +250,6 @@ def set_channel(iface, channel):
 
 
 # --- Packet Processing ---
-# (get_packet_features, packet_handler_profiling, packet_handler_monitoring - functions remain mostly the same)
-# ... (copy from previous version, BUT update threshold usage inside packet_handler_monitoring) ...
-
 # Global dictionary to store profiling data before averaging
 profiling_data_store = defaultdict(lambda: {'signals': [], 'channels': set(), 'auths': set(), 'beacons': [], 'ssid': None})
 
@@ -264,6 +259,11 @@ ASSOC_WINDOW = 2 # Seconds to consider responses related (Could be made configur
 
 def get_packet_features(pkt):
     """Extracts relevant features from Beacon or Probe Response packets."""
+    # --- !!! --- Added import needed for the fix --- !!! ---
+    # Make sure this import exists if not already present at the top of the file
+    # import scapy.layers.dot11
+    # --- !!! --- End Added import --- !!! ---
+
     features = {'bssid': None, 'ssid': None, 'channel': None, 'signal': None, 'auth_schemes': set(), 'beacon_interval': None}
     if pkt.haslayer(scapy.Dot11):
         # Use addr2 for BSSID in most management frames like Beacon, ProbeResp, AssocResp, Auth, Deauth, Disassoc
@@ -277,6 +277,8 @@ def get_packet_features(pkt):
             channel_found = False
             while elt:
                 try:
+                    # Check element IDs using defined constants if available, otherwise use numbers
+                    # Note: scapy.layers.dot11 might be needed for ELT_ID constants if you want to use them
                     if not ssid_found and elt.ID == 0 and hasattr(elt, 'info'): # SSID
                         features['ssid'] = elt.info.decode('utf-8', errors='ignore')
                         ssid_found = True
@@ -288,8 +290,10 @@ def get_packet_features(pkt):
                     elif elt.ID == 221 and hasattr(elt, 'info') and elt.info.startswith(b'\x00P\xf2\x01\x01\x00'): # WPA Vendor Specific
                          features['auth_schemes'].add('WPA')
 
-                except Exception:
-                    pass # Ignore decoding/parsing errors for specific elements
+                except Exception as e:
+                     # Print specific parsing errors if needed for debugging
+                     # print(f"Debug: Error parsing Dot11Elt ID={elt.ID}: {e}")
+                     pass # Ignore decoding/parsing errors for specific elements
 
                 # Navigate payload safely
                 if isinstance(elt.payload, scapy.Packet):
@@ -300,12 +304,13 @@ def get_packet_features(pkt):
         # Extract Signal Strength (from RadioTap) - Best effort
         try:
              if pkt.haslayer(scapy.RadioTap):
+                 # Search for dBm_AntSignal, fallback to older names if needed
                  if hasattr(pkt[scapy.RadioTap], 'dBm_AntSignal'):
                       features['signal'] = pkt[scapy.RadioTap].dBm_AntSignal
-                 elif hasattr(pkt[scapy.RadioTap], 'dbm_antsignal'):
+                 elif hasattr(pkt[scapy.RadioTap], 'dbm_antsignal'): # Some drivers/versions use lowercase
                       features['signal'] = pkt[scapy.RadioTap].dbm_antsignal
 
-                 # Extract Channel from RadioTap if not found in Dot11Elt
+                 # Extract Channel from RadioTap if not found in Dot11Elt (more reliable source often)
                  if features['channel'] is None and hasattr(pkt[scapy.RadioTap], 'ChannelFrequency'):
                       freq = pkt[scapy.RadioTap].ChannelFrequency
                       if 2412 <= freq <= 2484: # 2.4 GHz
@@ -313,8 +318,9 @@ def get_packet_features(pkt):
                       elif 5170 <= freq <= 5825: # 5 GHz U-NII bands
                           if freq == 5000: features['channel'] = 200
                           else: features['channel'] = int((freq - 5000) / 5)
-        except Exception:
-            pass
+        except Exception as e:
+            # print(f"Debug: Error parsing RadioTap: {e}")
+            pass # Signal strength or Channel Freq might not be present
 
         # Extract Beacon Interval and Capabilities (if Beacon/ProbeResp)
         if pkt.haslayer(scapy.Dot11Beacon) or pkt.haslayer(scapy.Dot11ProbeResp):
@@ -322,23 +328,44 @@ def get_packet_features(pkt):
              if hasattr(layer, 'beacon_interval'):
                   features['beacon_interval'] = layer.beacon_interval # Time Units (TU), 1 TU = 1024 microseconds
 
-             # --- !!! --- CORRECTED LINE BELOW --- !!! ---
+             # Check capabilities, including the fix for Dot11Caps and adding try-except
              if hasattr(layer, 'cap') and isinstance(layer.cap, scapy.layers.dot11.Dot11Caps):
-                # --- !!! --- END CORRECTION --- !!! ---
-                if layer.cap.privacy: # Check privacy bit
-                    if not ('RSN' in features['auth_schemes'] or 'WPA' in features['auth_schemes']):
-                         features['auth_schemes'].add('WEP/Other_Enc')
-                else:
-                     if not features['auth_schemes']:
-                          features['auth_schemes'].add('Open')
+                # --- !!! --- Added Try/Except block --- !!! ---
+                try:
+                    if layer.cap.privacy: # Check privacy bit
+                        # If RSN/WPA already found, they are more specific
+                        if not ('RSN' in features['auth_schemes'] or 'WPA' in features['auth_schemes']):
+                             features['auth_schemes'].add('WEP/Other_Enc') # WEP or some other encrypted if no WPA/RSN
+                    else:
+                         # If no encryption bits set and no WPA/RSN found, assume Open
+                         if not features['auth_schemes']:
+                              features['auth_schemes'].add('Open')
+                except AttributeError:
+                    # Handle cases where 'privacy' attribute might be missing unexpectedly
+                    print(f"Warning: Could not access privacy attribute for cap object of type {type(layer.cap)} from BSSID {features['bssid']}")
+                    # Attempt a fallback guess or mark as unknown
+                    if not features['auth_schemes']: features['auth_schemes'].add("Unknown")
+                # --- !!! --- End Try/Except block --- !!! ---
+             elif hasattr(layer, 'cap'):
+                 # If cap exists but isn't Dot11Caps, maybe try basic check? Or log?
+                 # print(f"Debug: Cap field found but type is {type(layer.cap)}")
+                 if not features['auth_schemes']: features['auth_schemes'].add("Unknown")
+             else:
+                  # No cap field found
+                  if not features['auth_schemes']: features['auth_schemes'].add("Unknown")
+
 
     # Ensure 'Open' isn't present if specific encryption is found
     if 'RSN' in features['auth_schemes'] or 'WPA' in features['auth_schemes'] or 'WEP/Other_Enc' in features['auth_schemes']:
         features['auth_schemes'].discard('Open')
 
-    # Handle case where no auth info found at all
+    # Handle case where no auth info found at all after all checks
     if not features['auth_schemes']:
         features['auth_schemes'].add("Unknown")
+        # Add BSSID to the features dict if not already present, for context in logs
+        if features['bssid'] is None and pkt.haslayer(scapy.Dot11) and hasattr(pkt[scapy.Dot11], 'addr2'):
+             features['bssid'] = pkt[scapy.Dot11].addr2
+
 
     return features
 
@@ -597,73 +624,33 @@ def send_deauth(iface, target_bssid, target_client='ff:ff:ff:ff:ff:ff', count=10
 # --- Main Execution ---
 
 def run_profiling(iface, target_ssids, duration):
-    """Runs the profiling phase, dividing total duration equally among channels."""
-    print(f"\n--- Starting Profiling Phase (Equal Time Per Channel) ---")
+    """Runs the profiling phase."""
+    print(f"\n--- Starting Profiling Phase ---")
     print(f"Target SSIDs: {', '.join(target_ssids)}")
     print(f"Sniffing on interface: {iface}")
-    print(f"Total profiling duration: {duration} seconds")
-
-    # Get channel list from config
-    channels_to_scan = config['general']['channels_to_scan']
-
-    if not channels_to_scan:
-        print("Error: No channels specified in config 'monitoring.channels_to_scan'. Cannot perform profiling.")
-        return
-
-    num_channels = len(channels_to_scan)
-    if duration <= 0 or num_channels <= 0:
-        print("Error: Profiling duration and number of channels must be positive.")
-        return
-
-    # Calculate time to spend on each channel
-    time_per_channel = duration / num_channels
-    # Optional: Set a minimum time per channel if calculated time is too low
-    min_time_per_channel = 2.0 # Example: At least 2 seconds per channel
-    if time_per_channel < min_time_per_channel:
-       print(f"Warning: Calculated time per channel ({time_per_channel:.2f}s) is low.")
-       print(f"Consider increasing total duration or reducing channels for better profiling.")
-    #    # Decide whether to use the low value or enforce minimum (enforcing might exceed total duration)
-    #    # For now, we'll just use the calculated value.
-
-    print(f"Scanning channels: {', '.join(map(str, channels_to_scan))}")
-    print(f"Allocated time per channel: {time_per_channel:.2f} seconds")
+    print(f"Profiling duration: {duration} seconds")
     print("Capturing baseline data for legitimate APs...")
 
     global profiling_data_store
     profiling_data_store.clear() # Clear previous data
 
     handler = packet_handler_profiling(target_ssids)
-    start_time = time.time() # Record start time for total duration reporting
 
     try:
-        for i, channel in enumerate(channels_to_scan):
-            print(f"\nScanning Channel {channel} ({i+1}/{num_channels}) for ~{time_per_channel:.2f} seconds...")
-            set_channel(iface, channel)
-
-            # Sniff on the current channel for the calculated duration portion
-            scapy.sniff(iface=iface, prn=handler, timeout=time_per_channel, store=False)
-
+        scapy.sniff(iface=iface, prn=handler, timeout=duration, store=False)
     except OSError as e:
-         print(f"\nError sniffing on channel {channel}: {e}. Do you have permissions (root)? Is the interface correct ('{iface}') and in monitor mode?")
-         # Continue to next channel or stop? Let's stop profiling on error.
+         print(f"Error sniffing: {e}. Do you have permissions (root)? Is the interface correct ('{iface}') and in monitor mode?")
          return
-    except KeyboardInterrupt:
-         print("\nProfiling interrupted by user (Ctrl+C). Processing data collected so far...")
-         # Allow processing of data collected up to this point
     except Exception as e:
-         print(f"\nAn unexpected error occurred during profiling sniffing: {e}")
-         import traceback
-         traceback.print_exc()
-         # Stop profiling on unexpected error
+         print(f"An unexpected error occurred during sniffing: {e}")
          return
 
-    print("\n--- Profiling Scan Complete ---")
-    actual_duration = time.time() - start_time
-    print(f"Total time spent: {actual_duration:.1f} seconds (Target: {duration}s)")
+
+    print("\n--- Profiling Complete ---")
     print("Processing collected data...")
 
     if not profiling_data_store:
-        print("No beacon/probe response frames captured for the target SSIDs. Ensure you are in range, the SSIDs are active, and the channels are correct.")
+        print("No beacon/probe response frames captured for the target SSIDs. Ensure you are in range and the SSIDs are active.")
         return
 
     for bssid, data in profiling_data_store.items():
@@ -765,8 +752,8 @@ def run_monitoring(iface, target_ssids, enable_deauth):
     print("Starting packet sniffing for monitoring... Press Ctrl+C to stop.")
     last_blacklist_check = time.time()
     blacklist_check_interval = config['monitoring']['blacklist_check_interval_seconds']
-    channel_hop_delay = config['general']['channel_hop_delay']
-    channels_to_scan = config['general']['channels_to_scan']
+    channel_hop_delay = config['monitoring']['channel_hop_delay_seconds']
+    channels_to_scan = config['monitoring']['channels_to_scan']
 
 
     handler = packet_handler_monitoring(target_ssids, whitelist_bssids_map, deauth_prompt_callback if enable_deauth else None)

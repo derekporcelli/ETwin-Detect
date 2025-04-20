@@ -83,8 +83,6 @@ def extract_channel(pkt):
         if freq:
             if 2412 <= freq <= 2484:  # 2.4 GHz band
                 return int((freq - 2412) / 5) + 1
-            elif 5000 <= freq <= 5900:  # 5 GHz band (approximate)
-                return int((freq - 5000) / 5)
 
     return None
 
