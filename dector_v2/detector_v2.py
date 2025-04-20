@@ -653,9 +653,7 @@ if __name__ == "__main__":
             if profiles is None:
                 raise RuntimeError("No baseline profiles.")
 
-            monitor_logic.run_monitoring(
-                iface=monitor_iface, config=config, profiles=profiles, known=known
-            )
+            monitor_logic.run_monitoring(iface=monitor_iface, config=config, profiles=profiles, known=known)
 
     except Exception as e:
         print(f"Fatal error: {e}")
