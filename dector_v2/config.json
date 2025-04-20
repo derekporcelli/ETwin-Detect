@@ -2,12 +2,24 @@
   "general": {
       "interface": "wlan0",
       "db_name": "ap_profiles_airodump.db",
-      "channels_to_scan": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], 
+      "channels_to_scan": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
       "temp_dir": "/tmp/airodump_profiling"
   },
   "profiling": {
       "dwell_time_ms": 5000,
       "scan_cycles": 1,
       "target_ssids": ["malmalmal"]
+  },
+  "monitoring": {
+      "target_ssids": ["malmalmal"],
+      "scan_dwell_seconds": 2,
+      "rssi_threshold_stdev": 3.0,
+      "rssi_threshold_dbm_abs": 20,
+      "rssi_spread_stdev_threshold": 10.0,
+      "rssi_spread_range_threshold": 25.0,
+      "beacon_rate_threshold_percent": 50.0,
+      "alert_cooldown_seconds": 60,
+      "rssi_window_size": 20,    
+       "beacon_time_window": 2
   }
 }
