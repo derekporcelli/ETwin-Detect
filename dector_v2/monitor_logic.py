@@ -353,7 +353,9 @@ def scapy_monitor_handler(pkt):
         last = state["last_alert_time"]
         print(last) # debug
         key  = "new_bssid"
-        if not state["alert_states"][key] and (now - last) > cooldown:
+        if (now - last) > cooldown:
+            state["alert_states"][key] = False
+        if not state["alert_states"][key]:
             generate_alert(
                 bssid,
                 ssid,
