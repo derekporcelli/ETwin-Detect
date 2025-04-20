@@ -31,7 +31,7 @@ CONFIG_DEFAULTS = {
         "target_ssids": ['malmalmal']     # Must be specified in config file - used for filtering AFTER scan
     },
     "monitoring": { 
-        "target_ssids": [], 
+        "target_ssids": ['malmalmal'], 
         "scan_dwell_seconds": 2, 
         "rssi_threshold_stdev": 3.0, 
         "rssi_threshold_dbm_abs": 20, 
