@@ -277,7 +277,7 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
     if now - last_check < rate_interval:
         return
 
-    print("checked") # debug
+    #print("checked") # debug
     state["last_beacon_rate_check"] = now
 
     base_rate = baseline.get("avg_beacon_rate")
@@ -285,24 +285,24 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
         return
 
     current_rate = len(state["beacon_timestamps"]) / window
-    print(base_rate, current_rate)
+    # print(base_rate, current_rate) # Debug
     pct_diff = abs(current_rate - base_rate) / base_rate * 100
     key = "beacon_rate"
     last_alert = state["last_alert_time"]
 
-    if pct_diff > beacon_pct:
-        if not state["alert_states"][key] and (now - last_alert) > cooldown:
-            generate_alert(
-                bssid,
-                ssid,
-                ch,
-                f"Beacon-Rate Δ {pct_diff:.0f}% > {beacon_pct}%",
-                rssi
-            )
-            state["alert_states"][key] = True
-            state["last_alert_time"] = now
-    else:
+    if now - last_alert > cooldown:
         state["alert_states"][key] = False
+
+    if pct_diff > beacon_pct and not state["alert_states"][key]:
+        generate_alert(
+            bssid,
+            ssid,
+            ch,
+            f"Beacon-Rate Δ {pct_diff:.0f}% > {beacon_pct}%",
+            rssi
+        )
+        state["alert_states"][key] = True
+        state["last_alert_time"] = now
 
 
 def scapy_monitor_handler(pkt):
