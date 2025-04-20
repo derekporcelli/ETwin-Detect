@@ -399,7 +399,7 @@ def scapy_monitor_handler(pkt):
     # Do not check unless interval has passed AND enough data
     if (now - last_rate_check) >= rate_check_interval:
         state["last_beacon_rate_check"] = now  # update check time
-
+        print("checked") # for debug
         current_rate = len(state["beacon_timestamps"]) / window
         base_rate = baseline.get("avg_beacon_rate")
         key = "beacon_rate"
