@@ -1,37 +1,42 @@
 #!/usr/bin/env python3
 
 import argparse
+import datetime
+import glob
 import json
 import os
-import signal
+import re
 import shutil
+import signal
 import sqlite3
+import statistics
 import subprocess
 import sys
 import time
-import glob
-import statistics
-import datetime
-from collections import defaultdict
 
 import pandas as pd
+
+from collections import defaultdict
+
 import monitor_logic
 
-# --- Defaults & Config Loader ---
+# --- Configuration Loading ---
 CONFIG_DEFAULTS = {
     "general": {
         "interface": "wlan0",
         "db_name": "ap_profiles_airodump.db",
-        "channels_to_scan": list(range(1, 12)),
+        "channels_to_scan": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+        ],
         "temp_dir": "/tmp/airodump_profiling"
     },
     "profiling": {
         "dwell_time_ms": 5000,
         "scan_cycles": 1,
-        "target_ssids": []
+        "target_ssids": ["malmalmal"]
     },
     "monitoring": {
-        "target_ssids": [],
+        "target_ssids": ["malmalmal"],
         "scan_dwell_seconds": 2,
         "rssi_threshold_stdev": 3.0,
         "rssi_threshold_dbm_abs": 20,
@@ -42,226 +47,650 @@ CONFIG_DEFAULTS = {
     }
 }
 
-def load_config(path):
+
+def load_config(filepath):
+    """
+    Loads configuration from a JSON file and merges it with defaults.
+    Exits on error.
+    """
     try:
-        user_cfg = json.load(open(path))
+        with open(filepath, "r") as f:
+            config_from_file = json.load(f)
     except FileNotFoundError:
-        print(f"Config '{path}' not found."); sys.exit(1)
+        print(f"Error: Config file '{filepath}' not found.")
+        sys.exit(1)
     except json.JSONDecodeError as e:
-        print(f"Config parse error: {e}"); sys.exit(1)
+        print(f"Error: Could not parse config '{filepath}': {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error loading config: {e}")
+        sys.exit(1)
 
-    cfg = CONFIG_DEFAULTS.copy()
-    for section, vals in user_cfg.items():
-        if section in cfg and isinstance(cfg[section], dict):
-            cfg[section].update(vals)
+    # Merge defaults and file values
+    merged = {}
+    for section, defaults in CONFIG_DEFAULTS.items():
+        if section in config_from_file:
+            value = config_from_file[section]
+            if isinstance(value, dict):
+                merged_section = defaults.copy()
+                merged_section.update(value)
+                merged[section] = merged_section
+            else:
+                merged[section] = value
         else:
-            cfg[section] = vals
+            merged[section] = defaults
 
-    prof_ssids = cfg['profiling']['target_ssids']
-    chans = cfg['general']['channels_to_scan']
-    if not prof_ssids or not chans or cfg['profiling']['dwell_time_ms'] <= 0 or cfg['profiling']['scan_cycles'] <= 0:
-        print("Invalid config values."); sys.exit(1)
+    print(f"Configuration loaded from '{filepath}'")
 
-    return cfg
+    # Validate required fields
+    profiling = merged["profiling"]
+    general = merged["general"]
 
-# --- Monitor Mode ---
-def set_monitor_mode(iface, enable):
-    # ensure airmon-ng exists
-    if subprocess.run(['which','airmon-ng'], capture_output=True).returncode:
-        print("airmon-ng not found."); return None
+    if not profiling["target_ssids"]:
+        print("Error: 'profiling.target_ssids' cannot be empty.")
+        sys.exit(1)
 
-    action = "start" if enable else "stop"
-    subprocess.run(['airmon-ng','check','kill'], capture_output=True)
-    subprocess.run(['airmon-ng', action, iface], capture_output=True)
-    return (iface + "mon") if enable else iface
+    if not general["channels_to_scan"]:
+        print("Error: 'general.channels_to_scan' cannot be empty.")
+        sys.exit(1)
 
-# --- DB Ops ---
+    if profiling["dwell_time_ms"] <= 0:
+        print("Error: 'profiling.dwell_time_ms' must be positive.")
+        sys.exit(1)
+
+    if profiling["scan_cycles"] <= 0:
+        print("Error: 'profiling.scan_cycles' must be positive.")
+        sys.exit(1)
+
+    return merged
+
+
+# Global configuration placeholder
+config = None
+
+
+def set_monitor_mode(iface, enable=True):
+    """
+    Enables or disables monitor mode on the given interface.
+    Returns the new interface name on success, or None on failure.
+    """
+    try:
+        subprocess.run(
+            ["which", "airmon-ng"],
+            check=True,
+            capture_output=True
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print("Error: 'airmon-ng' not found; install aircrack-ng suite.")
+        return None
+
+    if enable:
+        print(f"Enabling monitor mode on {iface}...")
+        try:
+            subprocess.run(
+                ["airmon-ng", "check", "kill"],
+                check=True,
+                capture_output=True,
+                timeout=15
+            )
+            result = subprocess.run(
+                ["airmon-ng", "start", iface],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=15
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"Error enabling monitor mode: {e.stderr}")
+            return None
+        except subprocess.TimeoutExpired:
+            print("Error: airmon-ng start command timed out.")
+            return None
+
+        monitor_iface = f"{iface}mon"
+        print(f"Monitor interface is {monitor_iface}")
+        return monitor_iface
+
+    else:
+        print(f"Disabling monitor mode on {iface}...")
+        try:
+            subprocess.run(
+                ["airmon-ng", "stop", iface],
+                check=False,
+                capture_output=True,
+                timeout=15
+            )
+        except subprocess.TimeoutExpired:
+            print("Warning: airmon-ng stop command timed out.")
+
+        try:
+            subprocess.run(
+                ["systemctl", "start", "NetworkManager"],
+                check=False,
+                capture_output=True,
+                timeout=15
+            )
+        except Exception:
+            print("Warning: could not restart NetworkManager.")
+
+        return iface
+
+
 def init_db():
-    db = config['general']['db_name']
-    with sqlite3.connect(db) as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS whitelist (
-                ssid TEXT,
-                bssid TEXT PRIMARY KEY,
-                channel INTEGER,
-                avg_rssi REAL,
-                stddev_rssi REAL,
-                privacy_raw TEXT,
-                cipher_raw TEXT,
-                authentication_raw TEXT,
-                avg_beacon_rate REAL,
-                profiled_time TEXT
-            );
-        """)
+    """
+    Creates (if needed) the SQLite database and whitelist table.
+    """
+    db_path = config["general"]["db_name"]
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
-def add_to_whitelist(d):
-    db = config['general']['db_name']
-    with sqlite3.connect(db) as conn:
-        conn.execute("""
-            INSERT OR REPLACE INTO whitelist
-            (ssid,bssid,channel,avg_rssi,stddev_rssi,privacy_raw,
-             cipher_raw,authentication_raw,avg_beacon_rate,profiled_time)
-            VALUES (?,?,?,?,?,?,?,?,?,?)
-        """, (
-            d['ssid'], d['bssid'].lower(), d['channel'],
-            d['avg_rssi'], d['stddev_rssi'],
-            d['privacy_raw'], d['cipher_raw'], d['authentication_raw'],
-            d['avg_beacon_rate'], d['profiled_time']
-        ))
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS whitelist (
+            ssid TEXT NOT NULL,
+            bssid TEXT PRIMARY KEY NOT NULL,
+            channel INTEGER,
+            avg_rssi REAL,
+            stddev_rssi REAL,
+            privacy_raw TEXT,
+            cipher_raw TEXT,
+            authentication_raw TEXT,
+            avg_beacon_rate REAL,
+            profiled_time TEXT NOT NULL
+        );
+        """
+    )
 
-def load_baseline(ssids):
-    db = config['general']['db_name']
-    ph = ','.join('?'*len(ssids))
-    q = f"SELECT ssid,bssid,channel,avg_rssi,stddev_rssi,privacy_raw,cipher_raw,authentication_raw,avg_beacon_rate FROM whitelist WHERE ssid IN ({ph})"
-    rows = sqlite3.connect(db).cursor().execute(q, ssids).fetchall()
-    if not rows:
-        print("No baseline for", ssids)
+    conn.commit()
+    conn.close()
+
+    print(f"Database '{db_path}' initialized.")
+
+
+def add_to_whitelist(profile_data):
+    """
+    Inserts or replaces an AP profile into the whitelist table.
+    """
+    db_path = config["general"]["db_name"]
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT OR REPLACE INTO whitelist (
+            ssid, bssid, channel, avg_rssi, stddev_rssi,
+            privacy_raw, cipher_raw, authentication_raw,
+            avg_beacon_rate, profiled_time
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """,
+        (
+            profile_data["ssid"],
+            profile_data["bssid"].lower(),
+            profile_data["channel"],
+            profile_data["avg_rssi"],
+            profile_data["stddev_rssi"],
+            profile_data["privacy_raw"],
+            profile_data["cipher_raw"],
+            profile_data["authentication_raw"],
+            profile_data["avg_beacon_rate"],
+            profile_data["profiled_time"]
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def parse_auth_details(privacy_set, cipher_set, auth_set):
+    """
+    Determines standardized auth_type and cipher from raw fields.
+    """
+    base_type = "Unknown"
+
+    if "OWE" in auth_set:
+        base_type = "OWE"
+    elif "WPA3" in privacy_set:
+        base_type = "WPA3"
+    elif "WPA2" in privacy_set:
+        base_type = "WPA2"
+    elif "WPA" in privacy_set:
+        base_type = "WPA"
+    elif "WEP" in privacy_set:
+        base_type = "WEP"
+    elif "OPN" in privacy_set:
+        base_type = "OPEN"
+
+    final_auth = base_type
+
+    if base_type == "WPA3" and "SAE" in auth_set:
+        final_auth += "-SAE"
+    elif base_type in ("WPA2", "WPA"):
+        if "PSK" in auth_set:
+            final_auth += "-PSK"
+        elif "MGT" in auth_set:
+            final_auth += "-EAP"
+
+    final_cipher = "Unknown"
+
+    if "GCMP-256" in cipher_set:
+        final_cipher = "GCMP-256"
+    elif "GCMP-128" in cipher_set:
+        final_cipher = "GCMP-128"
+    elif "CCMP" in cipher_set:
+        final_cipher = "CCMP"
+    elif "TKIP" in cipher_set:
+        final_cipher = "TKIP"
+    elif "WEP" in cipher_set:
+        final_cipher = "WEP"
+    elif base_type in ("OPEN", "OWE"):
+        final_cipher = "None"
+
+    return final_auth, final_cipher
+
+
+def load_baseline(target_ssids):
+    """
+    Reads the whitelist DB and returns:
+      - baseline_profiles: dict[bssid] = {profile fields}
+      - known_bssids_per_ssid: dict[ssid] = set(bssids)
+    """
+    db_path = config["general"]["db_name"]
+    baseline_profiles = {}
+    known_per_ssid = defaultdict(set)
+
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        placeholders = ",".join("?" for _ in target_ssids)
+        query = (
+            "SELECT ssid, bssid, channel, avg_rssi, stddev_rssi, "
+            "privacy_raw, cipher_raw, authentication_raw, avg_beacon_rate "
+            f"FROM whitelist WHERE ssid IN ({placeholders})"
+        )
+        cursor.execute(query, target_ssids)
+
+        rows = cursor.fetchall()
+        conn.close()
+    except sqlite3.Error as e:
+        print(f"DB Error loading baseline: {e}")
         return None, None
 
-    bp, kb = {}, defaultdict(set)
-    for ssid,bssid,chan,avg,sd,pr,cr,ar,abr in rows:
-        auth_type, cipher = monitor_logic.parse_auth_details({pr},{cr},{ar})
-        bp[bssid.lower()] = {
-            'ssid': ssid, 'channel': chan,
-            'avg_rssi': avg, 'stddev_rssi': sd,
-            'auth_type': auth_type, 'cipher': cipher,
-            'avg_beacon_rate': abr
+    if not rows:
+        print(f"Warning: No baseline profiles for SSIDs: {', '.join(target_ssids)}")
+        return None, None
+
+    for (ssid, bssid, chan, avg_r, std_r, priv, ciph, auth, avg_br) in rows:
+        b_lower = bssid.lower()
+
+        privacy_set = {priv} if priv else set()
+        cipher_set = {ciph} if ciph else set()
+        auth_set = {auth} if auth else set()
+
+        auth_type, cipher = parse_auth_details(
+            privacy_set, cipher_set, auth_set
+        )
+
+        profile = {
+            "ssid": ssid,
+            "channel": chan,
+            "avg_rssi": avg_r,
+            "stddev_rssi": std_r,
+            "auth_type": auth_type,
+            "cipher": cipher,
+            "avg_beacon_rate": avg_br
         }
-        kb[ssid].add(bssid.lower())
 
-    return bp, kb
+        baseline_profiles[b_lower] = profile
+        known_per_ssid[ssid].add(b_lower)
+
+    print(
+        f"Loaded {len(baseline_profiles)} profiles "
+        f"for {len(known_per_ssid)} SSIDs."
+    )
+
+    return baseline_profiles, known_per_ssid
 
 
-def parse_airodump_csv(path):
-    lines = open(path, encoding='utf-8', errors='ignore').read().splitlines()
-    aps, hdr = [], []
-    in_ap = False
-    for ln in lines:
-        if ln.startswith("BSSID,"):
-            in_ap = True
-            hdr = [h.strip().replace('# beacons','#Beacons').replace(' PWR','Power')
-                   .replace('channel','CH') for h in ln.split(',')]
-            continue
-        if ln.startswith("Station MAC,") or not ln:
-            break
-        if in_ap:
-            vals = [v.strip() for v in ln.split(',', len(hdr)-1)]
-            if len(vals)==len(hdr):
-                aps.append(dict(zip(hdr, vals)))
-    df = pd.DataFrame(aps)
-    for c in ['Power','#Beacons','CH']:
-        if c in df: df[c]=pd.to_numeric(df[c],errors='coerce')
-    if 'ESSID' in df: df['ESSID']=df['ESSID'].str.strip()
-    return df
+def parse_airodump_csv(csv_path):
+    """
+    Reads an airodump-ng CSV and returns a pandas DataFrame of the AP section.
+    """
+    try:
+        with open(csv_path, "r", encoding="utf-8", errors="ignore") as f:
+            in_ap = False
+            header = []
+            data = []
+
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+
+                if line.startswith("BSSID,"):
+                    in_ap = True
+                    header = [h.strip() for h in line.split(",")]
+                    # standardize header names
+                    header = [
+                        h.replace("# beacons", "#Beacons")
+                        for h in header
+                    ]
+                    header = [h.replace(" PWR", "Power") for h in header]
+                    # rename 'channel' to 'CH'
+                    header = [
+                        "CH" if h == "channel" else h
+                        for h in header
+                    ]
+                    continue
+
+                if line.startswith("Station MAC,"):
+                    break
+
+                if in_ap:
+                    parts = line.split(",", maxsplit=len(header) - 1)
+                    if len(parts) == len(header):
+                        entry = {
+                            key: val.strip()
+                            for key, val in zip(header, parts)
+                        }
+                        data.append(entry)
+
+        if not data:
+            return pd.DataFrame()
+
+        df = pd.DataFrame(data)
+
+        # Convert numeric columns
+        for col in ["Power", "#Beacons", "#Data", "CH"]:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+
+        if "ESSID" in df.columns:
+            df["ESSID"] = df["ESSID"].str.strip()
+
+        return df
+
+    except FileNotFoundError:
+        print(f"Warning: CSV not found: {csv_path}")
+        return pd.DataFrame()
+    except Exception as e:
+        print(f"Error parsing CSV {csv_path}: {e}")
+        return pd.DataFrame()
+
 
 def run_profiling(iface):
-    print("Profiling on", iface)
-    td, cycles = config['profiling']['dwell_time_ms']/1000, config['profiling']['scan_cycles']
-    chans = config['general']['channels_to_scan']
-    duration = max(10, len(chans)*td*cycles) + 2
-    prefix = os.path.join(config['general']['temp_dir'], "scan")
-    shutil.rmtree(config['general']['temp_dir'], ignore_errors=True)
-    os.makedirs(config['general']['temp_dir'], exist_ok=True)
+    """
+    Runs airodump-ng once, then parses and stores the results.
+    """
+    print("\n--- Profiling Phase ---")
+    print(f"Interface: {iface}")
+
+    profiling = config["profiling"]
+    general = config["general"]
+
+    target_ssids = profiling["target_ssids"]
+    channels = general["channels_to_scan"]
+    dwell_ms = profiling["dwell_time_ms"]
+    cycles = profiling["scan_cycles"]
+    temp_dir = general["temp_dir"]
+    prefix = os.path.join(temp_dir, "profile_scan")
+
+    dwell_s = dwell_ms / 1000.0
+    total = max(10.0, len(channels) * dwell_s * cycles) + 2.0
+
+    # prepare temp directory
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+    os.makedirs(temp_dir, exist_ok=True)
 
     cmd = [
-        'airodump-ng','--write',prefix,
-        '-c','.join(map(str,chans))',
-        '-f',str(config['profiling']['dwell_time_ms']),
-        '--write-interval','1','--output-format','csv',iface
+        "airodump-ng",
+        "--write", prefix,
+        "-c", ",".join(map(str, channels)),
+        "-f", str(dwell_ms),
+        "--write-interval", "1",
+        "--output-format", "csv",
+        iface
     ]
-    proc = subprocess.Popen(cmd, preexec_fn=os.setsid)
-    end = time.time()+duration
+
+    print(f"Running: {' '.join(cmd)}")
+    print(f"Expected duration: ~{total:.0f}s")
+
+    process = None
+
+    start = time.time()
     try:
-        while time.time()<end:
-            if proc.poll() is not None:
-                print("airodump exited early"); break
-            time.sleep(0.5)
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            preexec_fn=os.setsid
+        )
+
+        end = start + total
+        while time.time() < end:
+            if process.poll() is not None:
+                print("airodump-ng exited early.")
+                break
+            try:
+                time.sleep(0.5)
+            except KeyboardInterrupt:
+                print("Interrupted by user.")
+                raise
+
     except KeyboardInterrupt:
-        print("Interrupted by user")
+        print("Profiling interrupted.")
+    except Exception as e:
+        print(f"Error during profiling: {e}")
     finally:
-        os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        if process is not None and process.poll() is None:
+            print("Terminating airodump-ng...")
+            try:
+                os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                time.sleep(1)
+                if process.poll() is None:
+                    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                process.wait(timeout=5)
+            except Exception:
+                pass
 
     # process CSV
     csvs = glob.glob(f"{prefix}-*.csv")
     if not csvs:
-        print("No CSV found"); return
-    df = parse_airodump_csv(sorted(csvs)[0])
-    if df.empty:
-        print("No APs"); return
+        print("No CSV output found.")
+        return
 
-    df = df[df['ESSID'].isin(config['profiling']['target_ssids'])]
-    if df.empty:
-        print("No target SSIDs"); return
+    main_csv = sorted(csvs)[0]
+    print(f"Parsing: {main_csv}")
+    df = parse_airodump_csv(main_csv)
 
-    agg = defaultdict(lambda:{
-        'ssid':None,'rssi':[],'ch_rssi':defaultdict(list),
-        'beacons':0,'priv':set(),'cip':set(),'auth':set()
+    if df.empty:
+        print("No APs parsed.")
+        return
+
+    # filter by ESSID
+    df = df[df["ESSID"].isin(target_ssids)]
+
+    if df.empty:
+        print(f"No APs for SSIDs: {', '.join(target_ssids)}")
+        return
+
+    print(f"Found {len(df)} AP entries.")
+
+    # aggregate
+    agg = defaultdict(lambda: {
+        "ssid": None,
+        "rssi": [],
+        "channels": defaultdict(list),
+        "beacons": 0,
+        "privacy": set(),
+        "cipher": set(),
+        "auth": set()
     })
-    for _,r in df.iterrows():
-        b=r['BSSID']; s=r['ESSID']; p=r['Power']; bcn=r['#Beacons']
-        agg[b]['ssid']=s
-        if pd.notna(p): agg[b]['rssi'].append(p); agg[b]['ch_rssi'][r['CH']].append(p)
-        agg[b]['beacons']+=int(bcn or 0)
-        agg[b]['priv'].add(r.get('Privacy',''))
-        agg[b]['cip'].add(r.get('Cipher',''))
-        agg[b]['auth'].add(r.get('Authentication',''))
 
-    now = datetime.datetime.now().isoformat()
-    for b,data in agg.items():
-        if not data['ssid']:
+    for _, row in df.iterrows():
+        b = row["BSSID"]
+        if not b or len(b) != 17:
             continue
-        vals = data['rssi']
-        avg = round(statistics.mean(vals),2) if vals else None
-        sd = round(statistics.stdev(vals),2) if len(vals)>1 else 0
-        best_ch = max(data['ch_rssi'], key=lambda c: statistics.mean(data['ch_rssi'][c]), default=None)
-        rate = round(data['beacons']/duration,2) if duration>0 else 0
-        pr = sorted(data['priv'])[0] if data['priv'] else None
-        cr = sorted(data['cip'])[0] if data['cip'] else None
-        ar = sorted(data['auth'])[0] if data['auth'] else None
+
+        ssid = row["ESSID"]
+        pwr = row["Power"]
+        bc = row["#Beacons"]
+        pr = row.get("Privacy", "").strip()
+        cr = row.get("Cipher", "").strip()
+        ar = row.get("Authentication", "").strip()
+        ch = row["CH"]
+
+        rec = agg[b]
+        if not rec["ssid"]:
+            rec["ssid"] = ssid
+
+        if pd.notna(pwr):
+            rec["rssi"].append(int(pwr))
+            rec["channels"][int(ch)].append(int(pwr))
+
+        if pd.notna(bc):
+            rec["beacons"] += int(bc)
+
+        if pr:
+            rec["privacy"].add(pr)
+        if cr:
+            rec["cipher"].add(cr)
+        if ar:
+            rec["auth"].add(ar)
+
+    # compute and save
+    now = datetime.datetime.now().isoformat()
+    count = 0
+    duration = max(time.time() - start, 1.0)
+
+    for b, data in agg.items():
+        if not data["ssid"]:
+            continue
+
+        if data["rssi"]:
+            avg_rssi = round(statistics.mean(data["rssi"]), 2)
+            std_rssi = (round(statistics.stdev(data["rssi"]), 2)
+                        if len(data["rssi"]) > 1 else 0.0)
+        else:
+            avg_rssi = None
+            std_rssi = None
+
+        best_chan = None
+        best_avg = -999
+        for ch, lst in data["channels"].items():
+            avg_ch = statistics.mean(lst)
+            if avg_ch > best_avg:
+                best_avg = avg_ch
+                best_chan = ch
+
+        rate = round(data["beacons"] / duration, 2)
+
+        priv = sorted(data["privacy"])[0] if data["privacy"] else None
+        cip = sorted(data["cipher"])[0] if data["cipher"] else None
+        auth = sorted(data["auth"])[0] if data["auth"] else None
 
         profile = {
-            'ssid': data['ssid'], 'bssid': b, 'channel': best_ch,
-            'avg_rssi': avg, 'stddev_rssi': sd,
-            'privacy_raw': pr, 'cipher_raw': cr, 'authentication_raw': ar,
-            'avg_beacon_rate': rate, 'profiled_time': now
+            "ssid": data["ssid"],
+            "bssid": b,
+            "channel": best_chan,
+            "avg_rssi": avg_rssi,
+            "stddev_rssi": std_rssi,
+            "privacy_raw": priv,
+            "cipher_raw": cip,
+            "authentication_raw": auth,
+            "avg_beacon_rate": rate,
+            "profiled_time": now
         }
-        print("Saving", profile)
+
+        print(
+            f"Saving {profile['ssid']} ({b}) "
+            f"Ch:{best_chan} RSSI:{avg_rssi}±{std_rssi} "
+            f"Priv:'{priv}' Ciph:'{cip}' Auth:'{auth}' Rate:{rate}/s"
+        )
         add_to_whitelist(profile)
+        count += 1
 
-    shutil.rmtree(config['general']['temp_dir'], ignore_errors=True)
+    print(f"{count} profiles saved.")
+    try:
+        shutil.rmtree(config["general"]["temp_dir"])
+        print("Temp dir removed.")
+    except Exception:
+        print("Warning: could not remove temp dir.")
 
 
+# --- Main Execution ---
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument('-c','--config',default='config.json')
-    p.add_argument('-f','--profile',action='store_true')
-    p.add_argument('-m','--monitor',action='store_true')
-    args = p.parse_args()
+    parser = argparse.ArgumentParser(
+        description="AP Profiling & Monitoring Tool"
+    )
+    parser.add_argument(
+        "-c", "--config",
+        default="config.json",
+        help="Config file path"
+    )
+    parser.add_argument(
+        "-f", "--profile",
+        action="store_true",
+        help="Run profiling"
+    )
+    parser.add_argument(
+        "-m", "--monitor",
+        action="store_true",
+        help="Run monitoring"
+    )
+    args = parser.parse_args()
 
     config = load_config(args.config)
 
     if args.profile and args.monitor:
-        print("Choose one mode"); sys.exit(1)
+        print("Error: --profile and --monitor are mutually exclusive.")
+        sys.exit(1)
+
     if not (args.profile or args.monitor):
-        p.print_help(); sys.exit(1)
-    if os.geteuid()!=0:
-        print("Root needed"); sys.exit(1)
+        print("Error: must specify --profile or --monitor.")
+        parser.print_help()
+        sys.exit(1)
+
+    if os.geteuid() != 0:
+        print("Error: root privileges required.")
+        sys.exit(1)
 
     init_db()
 
-    iface = config['general']['interface']
-    mon_iface = set_monitor_mode(iface, True)
-    if not mon_iface:
-        print("Monitor mode failed"); sys.exit(1)
+    iface = config["general"]["interface"]
+    monitor_iface = None
+    failed = False
 
     try:
+        monitor_iface = set_monitor_mode(iface, enable=True)
+        if not monitor_iface:
+            raise RuntimeError("Failed to enable monitor mode.")
+
         if args.profile:
-            run_profiling(mon_iface)
-        else:
-            b,p = load_baseline(config['monitoring']['target_ssids'])
-            if not b:
-                print("No baseline"); sys.exit(1)
-            monitor_logic.run_monitoring(mon_iface, config, b, p)
+            run_profiling(monitor_iface)
+
+        if args.monitor:
+            ssids = config["monitoring"]["target_ssids"]
+            profiles, known = load_baseline(ssids)
+            if profiles is None:
+                raise RuntimeError("No baseline profiles.")
+
+            monitor_logic.run_monitoring(
+                iface=monitor_iface,
+                config=config,
+                profiles=profiles,
+                known=known
+            )
+
+    except Exception as e:
+        print(f"Fatal error: {e}")
+        failed = True
+
     finally:
-        set_monitor_mode(mon_iface, False)
-        print("Done")
+        if monitor_iface:
+            set_monitor_mode(monitor_iface, enable=False)
+        elif not failed:
+            print("Skipping monitor-mode disable (none active).")
+
+    print("Exiting.")  
