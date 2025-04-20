@@ -410,10 +410,12 @@ def scapy_monitor_handler(pkt):
     state["beacon_timestamps"] = [
         ts for ts in state["beacon_timestamps"] if (now - ts) <= window
     ]
+    
+    print(state["beacon_timestamps"]) # for debug
 
     current_rate = len(state["beacon_timestamps"]) / window
     base_rate    = baseline.get("avg_beacon_rate")
-    print(current_rate, base_rate) # debug
+    # print(current_rate, base_rate) # debug
     key          = "beacon_rate"
     last         = state["last_alert_time"]
 

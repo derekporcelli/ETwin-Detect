@@ -20,6 +20,6 @@
       "beacon_rate_threshold_percent": 50.0,
       "alert_cooldown_seconds": 60,
       "rssi_window_size": 20,    
-       "beacon_time_window": 2
+       "beacon_time_window": 15
   }
 }
