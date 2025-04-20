@@ -120,7 +120,7 @@ def load_baseline(ssids):
 
     bp, kb = {}, defaultdict(set)
     for ssid,bssid,chan,avg,sd,pr,cr,ar,abr in rows:
-        auth_type, cipher = parse_auth_details({pr},{cr},{ar})
+        auth_type, cipher = monitor_logic.parse_auth_details({pr},{cr},{ar})
         bp[bssid.lower()] = {
             'ssid': ssid, 'channel': chan,
             'avg_rssi': avg, 'stddev_rssi': sd,
@@ -131,8 +131,6 @@ def load_baseline(ssids):
 
     return bp, kb
 
-# Use existing parse_auth_details imported above
-from __main__ import parse_auth_details
 
 def parse_airodump_csv(path):
     lines = open(path, encoding='utf-8', errors='ignore').read().splitlines()
