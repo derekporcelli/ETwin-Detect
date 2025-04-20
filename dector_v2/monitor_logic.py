@@ -256,6 +256,57 @@ def channel_hopper(iface, stop_evt, channels, dwell):
         time.sleep(dwell)
         idx += 1
 
+# Beacon Rate check helper function
+def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
+    """
+    Check for beacon-rate anomalies every N seconds.
+    Uses a sliding time window.
+    """
+    window              = cfg.get("beacon_time_window", BEACON_WINDOW_SECONDS_DEFAULT)
+    rate_interval       = cfg.get("beacon_rate_check_interval", 10)
+    beacon_pct          = cfg.get("beacon_rate_threshold_percent", BEACON_PCT_THRESH_DEFAULT)
+    cooldown            = cfg.get("alert_cooldown_seconds", ALERT_COOLDOWN_DEFAULT)
+    last_check          = state.get("last_beacon_rate_check", None)
+
+    # Add current timestamp to beacon history
+    state["beacon_timestamps"].append(now)
+    state["beacon_timestamps"] = [
+        ts for ts in state["beacon_timestamps"] if (now - ts) <= window
+    ]
+
+    # Skip on first encounter or too soon
+    if last_check is None:
+        state["last_beacon_rate_check"] = now
+        return
+
+    if now - last_check < rate_interval:
+        return
+
+    state["last_beacon_rate_check"] = now
+
+    base_rate = baseline.get("avg_beacon_rate")
+    if not base_rate or base_rate <= 0:
+        return
+
+    current_rate = len(state["beacon_timestamps"]) / window
+    pct_diff = abs(current_rate - base_rate) / base_rate * 100
+    key = "beacon_rate"
+    last_alert = state["last_alert_time"]
+
+    if pct_diff > beacon_pct:
+        if not state["alert_states"][key] and (now - last_alert) > cooldown:
+            generate_alert(
+                bssid,
+                ssid,
+                ch,
+                f"Beacon-Rate Δ {pct_diff:.0f}% > {beacon_pct}%",
+                rssi
+            )
+            state["alert_states"][key] = True
+            state["last_alert_time"] = now
+    else:
+        state["alert_states"][key] = False
+
 
 def scapy_monitor_handler(pkt):
     """
@@ -385,43 +436,7 @@ def scapy_monitor_handler(pkt):
             state["alert_states"][key] = False
 
     # --- Beacon-Rate Anomaly ---
-    state["beacon_timestamps"].append(now)
-
-    # prune older than window
-    state["beacon_timestamps"] = [
-        ts for ts in state["beacon_timestamps"] if (now - ts) <= window
-    ]
-
-    # --- Rate check only every N seconds ---
-    last_rate_check = state.get("last_beacon_rate_check", 0.0)
-    rate_check_interval = cfg.get("beacon_rate_check_interval", 10)
-
-    # Do not check unless interval has passed AND enough data
-    print(now) # for debug
-    if (now - last_rate_check) >= rate_check_interval:
-        state["last_beacon_rate_check"] = now  # update check time
-        print("checked") # for debug
-        current_rate = len(state["beacon_timestamps"]) / window
-        base_rate = baseline.get("avg_beacon_rate")
-        key = "beacon_rate"
-        last = state["last_alert_time"]
-
-        if base_rate and base_rate > 0:
-            pct_diff = abs(current_rate - base_rate) / base_rate * 100
-
-            if pct_diff > beacon_pct:
-                if not state["alert_states"][key] and (now - last) > cooldown:
-                    generate_alert(
-                        bssid,
-                        ssid,
-                        ch,
-                        f"Beacon-Rate Δ {pct_diff:.0f}% > {beacon_pct}%",
-                        rssi
-                    )
-                    state["alert_states"][key] = True
-                    fired = True
-            else:
-                state["alert_states"][key] = False
+    check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg)
 
     # 6) Auth/Cipher mismatch
     auth_type, cipher = parse_auth(pkt)
