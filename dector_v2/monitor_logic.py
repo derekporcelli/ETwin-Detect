@@ -61,30 +61,30 @@ def extract_rssi(pkt):
 
 def extract_channel(pkt):
     """
-    Return channel number via RadioTap freq or DS Parameter Set,
-    or None if unknown.
+    Extract the Wi-Fi channel from a beacon or probe response frame.
+
+    Priority:
+    1. DS Parameter Set (Tag ID 3) — used by airodump-ng
+    2. Fallback to RadioTap frequency if necessary
     """
+
+    # First try DS Parameter Set (ID 3)
+    if pkt.haslayer(Dot11Elt):
+        elt = pkt[Dot11Elt]
+        while elt:
+            if elt.ID == 3 and elt.len == 1:
+                return elt.info[0]  # One-byte channel number
+            elt = elt.payload.getlayer(Dot11Elt)
+
+    # Fallback: RadioTap frequency → channel mapping
     if pkt.haslayer(RadioTap):
         rt = pkt[RadioTap]
         freq = getattr(rt, "ChannelFrequency", None)
-
-        return int((freq - 2407) // 5) + 1
-
-    if pkt.haslayer(Dot11Elt):
-        elt = pkt.getlayer(Dot11Elt)
-
-        while elt:
-            if elt.ID == 3 and elt.info:
-                return elt.info[0]
-
-            if (
-                elt.payload
-                and isinstance(elt.payload, scapy.Packet)
-                and elt.payload.haslayer(Dot11Elt)
-            ):
-                elt = elt.payload.getlayer(Dot11Elt)
-            else:
-                break
+        if freq:
+            if 2412 <= freq <= 2484:  # 2.4 GHz band
+                return int((freq - 2412) / 5) + 1
+            elif 5000 <= freq <= 5900:  # 5 GHz band (approximate)
+                return int((freq - 5000) / 5)
 
     return None
 
