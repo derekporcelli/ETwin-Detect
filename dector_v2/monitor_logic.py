@@ -45,6 +45,7 @@ RSSI_ABS_THRESH_DEFAULT         = 20.0
 BEACON_PCT_THRESH_DEFAULT       = 50.0
 ALERT_COOLDOWN_DEFAULT          = 60
 BEACON_WINDOW_SECONDS_DEFAULT   = 30
+BEACON_RATE_CHECK_INTERVAL      = 10
 RSSI_WINDOW_DEFAULT             = 20
 
 
@@ -259,48 +260,39 @@ def channel_hopper(iface, stop_evt, channels, dwell):
 def scapy_monitor_handler(pkt):
     """
     Packet handler for Scapy sniff() — performs all anomaly checks
-    using thresholds from monitor_config_global.
+    using thresholds from monitor_config_global, including batched
+    beacon‑rate checks every N seconds.
     """
     if not SCAPY_AVAILABLE:
         return
 
     cfg           = monitor_config_global
     targets       = cfg.get("target_ssids", [])
-    thresh_stdev  = cfg.get(
-        "rssi_spread_stdev_threshold", RSSI_STDEV_THRESH_DEFAULT
-    )
-    thresh_range  = cfg.get(
-        "rssi_spread_range_threshold", RSSI_RANGE_THRESH_DEFAULT
-    )
-    abs_thresh    = cfg.get(
-        "rssi_threshold_dbm_abs", RSSI_ABS_THRESH_DEFAULT
-    )
-    beacon_pct    = cfg.get(
-        "beacon_rate_threshold_percent", BEACON_PCT_THRESH_DEFAULT
-    )
-    cooldown      = cfg.get(
-        "alert_cooldown_seconds", ALERT_COOLDOWN_DEFAULT
-    )
-    window        = cfg.get(
-        "beacon_time_window", BEACON_WINDOW_SECONDS_DEFAULT
-    )
+    thresh_stdev  = cfg.get("rssi_spread_stdev_threshold", RSSI_STDEV_THRESH_DEFAULT)
+    thresh_range  = cfg.get("rssi_spread_range_threshold", RSSI_RANGE_THRESH_DEFAULT)
+    abs_thresh    = cfg.get("rssi_threshold_dbm_abs", RSSI_ABS_THRESH_DEFAULT)
+    beacon_pct    = cfg.get("beacon_rate_threshold_percent", BEACON_PCT_THRESH_DEFAULT)
+    cooldown      = cfg.get("alert_cooldown_seconds", ALERT_COOLDOWN_DEFAULT)
+    window        = cfg.get("beacon_time_window", BEACON_WINDOW_SECONDS_DEFAULT)
+    rate_interval = cfg.get("beacon_rate_check_interval", BEACON_RATE_CHECK_INTERVAL)
 
+    # Only handle Beacon or ProbeResp frames
     if not (pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp)):
         return
 
-    bssid = None
+    # Extract BSSID
+    if not pkt.haslayer(Dot11):
+        return
 
-    if pkt.haslayer(Dot11):
-        bssid = pkt[Dot11].addr2
-
+    bssid = pkt[Dot11].addr2
     if not bssid:
         return
 
     bssid = bssid.lower()
     now   = pkt.time
 
-    ssid  = extract_ssid(pkt)
-
+    # SSID filter
+    ssid = extract_ssid(pkt)
     if ssid not in targets:
         return
 
@@ -308,11 +300,10 @@ def scapy_monitor_handler(pkt):
     baseline = baseline_profiles_global.get(bssid)
     known    = known_bssids_per_ssid_global.get(ssid, set())
 
-    # Unknown BSSID for a known SSID
+    # 1) Unknown‐BSSID check
     if bssid not in known:
         last = state["last_alert_time"]
         key  = "new_bssid"
-
         if not state["alert_states"][key] and (now - last) > cooldown:
             generate_alert(
                 bssid,
@@ -321,10 +312,8 @@ def scapy_monitor_handler(pkt):
                 "Different BSSID (Potential Evil Twin)",
                 extract_rssi(pkt)
             )
-
             state["alert_states"][key]     = True
             state["last_alert_time"]       = now
-
         return
 
     if not baseline:
@@ -332,7 +321,7 @@ def scapy_monitor_handler(pkt):
 
     fired = False
 
-    # --- Channel Mismatch ---
+    # 2) Channel mismatch
     ch      = extract_channel(pkt)
     exp_ch  = baseline.get("channel")
     key     = "chan_mismatch"
@@ -341,21 +330,17 @@ def scapy_monitor_handler(pkt):
     if ch is not None and exp_ch is not None and ch != exp_ch:
         if not state["alert_states"][key] and (now - last) > cooldown:
             generate_alert(
-                bssid,
-                ssid,
-                ch,
+                bssid, ssid, ch,
                 f"Channel Mismatch (Expected {exp_ch})",
                 extract_rssi(pkt)
             )
-
             state["alert_states"][key] = True
             fired                       = True
     else:
         state["alert_states"][key] = False
 
-    # --- RSSI Spread Anomaly ---
+    # 3) RSSI spread
     rssi = extract_rssi(pkt)
-
     if rssi is not None:
         lst = state["recent_rssi"]
         lst.append(rssi)
@@ -372,9 +357,7 @@ def scapy_monitor_handler(pkt):
             if (stdev > thresh_stdev) or (rng > thresh_range):
                 if not state["alert_states"][key] and (now - last) > cooldown:
                     generate_alert(
-                        bssid,
-                        ssid,
-                        ch,
+                        bssid, ssid, ch,
                         f"RSSI Spread Anomaly (StDev:{stdev:.1f} Rng:{rng:.0f}dB)",
                         rssi
                     )
@@ -383,8 +366,8 @@ def scapy_monitor_handler(pkt):
             else:
                 state["alert_states"][key] = False
 
-    # --- Absolute-RSSI Anomaly ---
-    if (rssi is not None) and (baseline.get("avg_rssi") is not None):
+    # 4) Absolute‐RSSI anomaly
+    if rssi is not None and baseline.get("avg_rssi") is not None:
         diff = abs(rssi - baseline["avg_rssi"])
         key  = "rssi_abs"
         last = state["last_alert_time"]
@@ -392,9 +375,7 @@ def scapy_monitor_handler(pkt):
         if diff > abs_thresh:
             if not state["alert_states"][key] and (now - last) > cooldown:
                 generate_alert(
-                    bssid,
-                    ssid,
-                    ch,
+                    bssid, ssid, ch,
                     f"RSSI Δ > {abs_thresh} dB",
                     rssi
                 )
@@ -403,40 +384,41 @@ def scapy_monitor_handler(pkt):
         else:
             state["alert_states"][key] = False
 
-    # --- Beacon-Rate Anomaly ---
+    # 5) Beacon‐rate: always record the timestamp
     state["beacon_timestamps"].append(now)
 
-    # prune older than window
-    state["beacon_timestamps"] = [
-        ts for ts in state["beacon_timestamps"] if (now - ts) <= window
-    ]
-    
-    print(state["beacon_timestamps"]) # for debug
+    # 5a) Batched check only every rate_interval seconds
+    last_rate_check = state.get("last_beacon_rate_check", 0.0)
+    if (now - last_rate_check) >= rate_interval:
+        state["last_beacon_rate_check"] = now
 
-    current_rate = len(state["beacon_timestamps"]) / window
-    base_rate    = baseline.get("avg_beacon_rate")
-    # print(current_rate, base_rate) # debug
-    key          = "beacon_rate"
-    last         = state["last_alert_time"]
+        # prune to the sliding window
+        state["beacon_timestamps"] = [
+            ts for ts in state["beacon_timestamps"]
+            if (now - ts) <= window
+        ]
 
-    if base_rate and base_rate > 0:
-        pct_diff = abs(current_rate - base_rate) / base_rate * 100
+        current_rate = len(state["beacon_timestamps"]) / window
+        base_rate    = baseline.get("avg_beacon_rate")
+        key          = "beacon_rate"
+        last         = state["last_alert_time"]
 
-        if pct_diff > beacon_pct:
-            if not state["alert_states"][key] and (now - last) > cooldown:
-                generate_alert(
-                    bssid,
-                    ssid,
-                    ch,
-                    f"Beacon-Rate Δ {pct_diff:.0f}% > {beacon_pct}%",
-                    rssi
-                )
-                state["alert_states"][key] = True
-                fired                       = True
-        else:
-            state["alert_states"][key] = False
+        if base_rate and base_rate > 0:
+            pct_diff = abs(current_rate - base_rate) / base_rate * 100
 
-    # --- Auth/Cipher Mismatch ---
+            if pct_diff > beacon_pct:
+                if not state["alert_states"][key] and (now - last) > cooldown:
+                    generate_alert(
+                        bssid, ssid, ch,
+                        f"Beacon‐Rate Δ {pct_diff:.0f}% > {beacon_pct}%",
+                        rssi
+                    )
+                    state["alert_states"][key] = True
+                    fired                       = True
+            else:
+                state["alert_states"][key] = False
+
+    # 6) Auth/Cipher mismatch
     auth_type, cipher = parse_auth(pkt)
     exp_auth = baseline.get("auth_type")
     exp_ciph = baseline.get("cipher")
@@ -449,15 +431,16 @@ def scapy_monitor_handler(pkt):
                 f"Auth Mismatch (Got {auth_type}/{cipher}, "
                 f"Exp {exp_auth}/{exp_ciph})"
             )
-
             generate_alert(bssid, ssid, ch, reason, rssi)
             state["alert_states"][key] = True
             fired                       = True
     else:
         state["alert_states"][key] = False
 
+    # 7) If anything fired, update last_alert_time
     if fired:
         state["last_alert_time"] = now
+
 
 
 def run_monitoring(iface, config, profiles, known):
