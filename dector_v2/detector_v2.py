@@ -160,6 +160,56 @@ def add_to_whitelist(profile_data):
     conn.commit()
     conn.close()
 
+def parse_auth_details(privacy_set, cipher_set, auth_set):
+    """Determines standardized Auth Type and Cipher from separate field sets."""
+    final_auth_type = "Unknown"; final_cipher = "Unknown"; base_type = "Unknown"
+    if "OWE" in auth_set: base_type = "OWE"
+    elif "WPA3" in privacy_set: base_type = "WPA3"
+    elif "WPA2" in privacy_set: base_type = "WPA2"
+    elif "WPA" in privacy_set and not ("WPA2" in privacy_set or "WPA3" in privacy_set): base_type = "WPA"
+    elif "WEP" in privacy_set and not ("WPA" in privacy_set or "WPA2" in privacy_set or "WPA3" in privacy_set or base_type == "OWE"): base_type = "WEP"
+    elif "OPN" in privacy_set and base_type == "Unknown": base_type = "OPEN"
+    final_auth_type = base_type
+    if base_type == "WPA3":
+        if "SAE" in auth_set: final_auth_type += "-SAE"
+        elif "MGT" in auth_set: final_auth_type += "-EAP"
+    elif base_type in ["WPA2", "WPA"]:
+        if "PSK" in auth_set: final_auth_type += "-PSK"
+        elif "MGT" in auth_set: final_auth_type += "-EAP"
+    if "GCMP-256" in cipher_set: final_cipher = "GCMP-256"
+    elif "GCMP-128" in cipher_set: final_cipher = "GCMP-128"
+    elif "GCMP" in cipher_set and final_cipher == "Unknown": final_cipher = "GCMP-256"
+    elif "CCMP" in cipher_set: final_cipher = "CCMP"
+    elif "TKIP" in cipher_set: final_cipher = "TKIP"
+    elif ("WEP" in cipher_set or "WEP40" in cipher_set or "WEP104" in cipher_set) and base_type == "WEP": final_cipher = "WEP"
+    elif base_type in ["OPEN", "OWE"]: final_cipher = "None"
+    if "CCMP" in cipher_set and "TKIP" in cipher_set: final_cipher = "CCMP" # Prioritize CCMP
+    if final_cipher == "Unknown":
+        if final_auth_type.startswith("WPA3"): final_cipher = "GCMP-256"
+        elif final_auth_type.startswith("WPA2"): final_cipher = "CCMP"
+        elif final_auth_type in ["WPA", "WPA-PSK", "WPA-EAP"]: final_cipher = "TKIP"
+        elif final_auth_type == "WEP": final_cipher = "WEP"
+    return final_auth_type, final_cipher
+
+def load_baseline(target_ssids):
+    """Loads baseline profiles and parses raw auth strings."""
+    db_path = config['general']['db_name']; baseline_profiles = {}; known_bssids_per_ssid = defaultdict(set)
+    try:
+        conn = sqlite3.connect(db_path); cursor = conn.cursor()
+        placeholders = ','.join('?' * len(target_ssids))
+        query = f"""SELECT ssid, bssid, channel, avg_rssi, stddev_rssi, privacy_raw, cipher_raw, authentication_raw, avg_beacon_rate FROM whitelist WHERE ssid IN ({placeholders}) """
+        cursor.execute(query, target_ssids); rows = cursor.fetchall(); conn.close()
+        if not rows: print(f"Warning: No baseline profiles found for SSIDs: {', '.join(target_ssids)}"); return None, None
+        for row in rows:
+            ssid, bssid, chan, avg_r, std_r, priv_r, ciph_r, auth_r, avg_br = row; bssid_lower = bssid.lower()
+            privacy_set = {priv_r} if priv_r else set(); cipher_set = {ciph_r} if ciph_r else set(); auth_set = {auth_r} if auth_r else set()
+            parsed_auth_type, parsed_cipher = parse_auth_details(privacy_set, cipher_set, auth_set) # Use helper
+            profile = { 'ssid': ssid, 'channel': chan, 'avg_rssi': avg_r, 'stddev_rssi': std_r, 'auth_type': parsed_auth_type, 'cipher': parsed_cipher, 'avg_beacon_rate': avg_br }
+            baseline_profiles[bssid_lower] = profile; known_bssids_per_ssid[ssid].add(bssid_lower)
+        print(f"Loaded and parsed {len(baseline_profiles)} baseline profiles for {len(known_bssids_per_ssid)} SSIDs.")
+        return baseline_profiles, known_bssids_per_ssid
+    except sqlite3.Error as e: print(f"DB Error loading baseline: {e}"); return None, None
+    except Exception as e: print(f"Error loading baseline: {e}"); return None, None
 
 # --- Helper Functions ---
 def parse_airodump_csv(csv_path):
@@ -461,9 +511,7 @@ if __name__ == "__main__":
         elif args.monitor:
             print("Starting monitoring process (Scapy)...")
             target_ssids_mon = config["monitoring"]["target_ssids"]
-            baseline_profiles, known_bssids = monitor_logic.load_baseline(
-                target_ssids_mon
-            )
+            baseline_profiles, known_bssids = monitor_logic.load_baseline(target_ssids_mon)
 
             if baseline_profiles is None:
                 print("Cannot start monitoring without baseline profiles.")
