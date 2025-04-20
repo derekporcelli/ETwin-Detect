@@ -351,7 +351,6 @@ def scapy_monitor_handler(pkt):
     # 1) Unknown‐BSSID check
     if bssid not in known:
         last = state["last_alert_time"]
-        print(last) # debug
         key  = "new_bssid"
         if (now - last) > cooldown:
             state["alert_states"][key] = False
