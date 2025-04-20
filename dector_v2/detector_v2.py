@@ -520,8 +520,8 @@ if __name__ == "__main__":
             monitor_logic.run_monitoring(
                 iface=monitor_iface_active,
                 config_dict=config,
-                baseline_profiles=baseline_profiles,
-                known_bssids=known_bssids
+                baseline_profiles_dict=baseline_profiles,
+                known_bssids_dict=known_bssids
             )
 
     except Exception as e:
