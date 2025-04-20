@@ -384,24 +384,26 @@ def scapy_monitor_handler(pkt):
         else:
             state["alert_states"][key] = False
 
-    # 5) Beacon‐rate: always record the timestamp
+    # --- Beacon-Rate Anomaly ---
     state["beacon_timestamps"].append(now)
 
-    # 5a) Batched check only every rate_interval seconds
-    last_rate_check = state.get("last_beacon_rate_check", 0.0)
-    if (now - last_rate_check) >= rate_interval:
-        state["last_beacon_rate_check"] = now
+    # prune older than window
+    state["beacon_timestamps"] = [
+        ts for ts in state["beacon_timestamps"] if (now - ts) <= window
+    ]
 
-        # prune to the sliding window
-        state["beacon_timestamps"] = [
-            ts for ts in state["beacon_timestamps"]
-            if (now - ts) <= window
-        ]
+    # --- Rate check only every N seconds ---
+    last_rate_check = state.get("last_beacon_rate_check", 0.0)
+    rate_check_interval = cfg.get("beacon_rate_check_interval", 10)
+
+    # Do not check unless interval has passed AND enough data
+    if (now - last_rate_check) >= rate_check_interval:
+        state["last_beacon_rate_check"] = now  # update check time
 
         current_rate = len(state["beacon_timestamps"]) / window
-        base_rate    = baseline.get("avg_beacon_rate")
-        key          = "beacon_rate"
-        last         = state["last_alert_time"]
+        base_rate = baseline.get("avg_beacon_rate")
+        key = "beacon_rate"
+        last = state["last_alert_time"]
 
         if base_rate and base_rate > 0:
             pct_diff = abs(current_rate - base_rate) / base_rate * 100
@@ -409,12 +411,14 @@ def scapy_monitor_handler(pkt):
             if pct_diff > beacon_pct:
                 if not state["alert_states"][key] and (now - last) > cooldown:
                     generate_alert(
-                        bssid, ssid, ch,
-                        f"Beacon‐Rate Δ {pct_diff:.0f}% > {beacon_pct}%",
+                        bssid,
+                        ssid,
+                        ch,
+                        f"Beacon-Rate Δ {pct_diff:.0f}% > {beacon_pct}%",
                         rssi
                     )
                     state["alert_states"][key] = True
-                    fired                       = True
+                    fired = True
             else:
                 state["alert_states"][key] = False
 
