@@ -136,12 +136,19 @@ def parse_auth(pkt):
 
     # print(pkt.getlayer(Dot11Elt)) # for debug
 
-    for elt in pkt.getlayer(Dot11Elt):
-        print(elt) # DEBUG 
+    elt = pkt.getlayer(Dot11Elt)
+    while elt:
+        print(elt)  # DEBUG
         if elt.ID == 48:
             privacy.add("WPA2")
         if elt.ID == 221:
             privacy.add("WPA")
+
+        # Walk to next element
+        if elt.payload and isinstance(elt.payload, scapy.Packet) and elt.payload.haslayer(Dot11Elt):
+            elt = elt.payload.getlayer(Dot11Elt)
+        else:
+            break
 
     cap = None
     if pkt.haslayer(Dot11Beacon):
