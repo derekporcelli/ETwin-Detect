@@ -92,7 +92,7 @@ def parse_auth_details(privacy, cipher, auth):
         final_cipher = "WEP"
     elif base in ("OPEN","OWE"):
         final_cipher = "None"
-
+    print(auth_type, final_cipher) # For Debug
     return auth_type, final_cipher
 
 
