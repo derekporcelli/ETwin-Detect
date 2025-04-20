@@ -254,43 +254,44 @@ def channel_hopper(iface, stop_evt, channels, dwell):
 # Beacon Rate check helper function
 def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
     """
-    Check for beacon-rate anomalies every N seconds.
-    Uses a sliding time window.
+    Check for beacon-rate anomalies every N seconds using a sliding window.
     """
-    window              = cfg.get("beacon_time_window", BEACON_WINDOW_SECONDS_DEFAULT)
-    rate_interval       = cfg.get("beacon_rate_check_interval", 10)
-    beacon_pct          = cfg.get("beacon_rate_threshold_percent", BEACON_PCT_THRESH_DEFAULT)
-    cooldown            = cfg.get("alert_cooldown_seconds", ALERT_COOLDOWN_DEFAULT)
-    last_check          = state.get("last_beacon_rate_check", None)
+    window         = cfg.get("beacon_time_window", BEACON_WINDOW_SECONDS_DEFAULT)
+    rate_interval  = cfg.get("beacon_rate_check_interval", 10)
+    beacon_pct     = cfg.get("beacon_rate_threshold_percent", BEACON_PCT_THRESH_DEFAULT)
+    cooldown       = cfg.get("alert_cooldown_seconds", ALERT_COOLDOWN_DEFAULT)
+    last_check     = state.get("last_beacon_rate_check", None)
+    last_alert     = state.get("last_alert_time", 0)
+    key            = "beacon_rate"
 
-    # Add current timestamp to beacon history
+    # Update beacon timestamps (sliding window)
     state["beacon_timestamps"].append(now)
     state["beacon_timestamps"] = [
         ts for ts in state["beacon_timestamps"] if (now - ts) <= window
     ]
 
-    # Skip on first encounter or too soon
+    # First-time check setup
     if last_check is None:
         state["last_beacon_rate_check"] = now
         return
 
-    if now - last_check < rate_interval:
+    # Not time for next check
+    if (now - last_check) < rate_interval:
         return
 
-    #print("checked") # debug
+    # Update last check timestamp
     state["last_beacon_rate_check"] = now
 
     base_rate = baseline.get("avg_beacon_rate")
     if not base_rate or base_rate <= 0:
         return
 
+    # Current observed beacon rate (per second)
     current_rate = len(state["beacon_timestamps"]) / window
-    # print(base_rate, current_rate) # Debug
-    pct_diff = abs(current_rate - base_rate) / base_rate * 100
-    key = "beacon_rate"
-    last_alert = state["last_alert_time"]
+    pct_diff     = abs(current_rate - base_rate) / base_rate * 100
 
-    if now - last_alert > cooldown:
+    # Reset alert flag if cooldown passed
+    if (now - last_alert) > cooldown:
         state["alert_states"][key] = False
 
     if pct_diff > beacon_pct and not state["alert_states"][key]:
@@ -302,7 +303,10 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
             rssi
         )
         state["alert_states"][key] = True
-        state["last_alert_time"] = now
+        state["last_alert_time"]   = now
+
+        # Optional: clear history if you want per-interval (non-sliding) rate
+        # state["beacon_timestamps"].clear()
 
 
 def scapy_monitor_handler(pkt):
