@@ -322,11 +322,9 @@ def scapy_monitor_handler(pkt):
     thresh_stdev  = cfg.get("rssi_spread_stdev_threshold", RSSI_STDEV_THRESH_DEFAULT)
     thresh_range  = cfg.get("rssi_spread_range_threshold", RSSI_RANGE_THRESH_DEFAULT)
     abs_thresh    = cfg.get("rssi_threshold_dbm_abs", RSSI_ABS_THRESH_DEFAULT)
-    beacon_pct    = cfg.get("beacon_rate_threshold_percent", BEACON_PCT_THRESH_DEFAULT)
     cooldown      = cfg.get("alert_cooldown_seconds", ALERT_COOLDOWN_DEFAULT)
-    window        = cfg.get("beacon_time_window", BEACON_WINDOW_SECONDS_DEFAULT)
-    rate_interval = cfg.get("beacon_rate_check_interval", BEACON_RATE_CHECK_INTERVAL)
 
+    print(cooldown) # debug
     # Only handle Beacon or ProbeResp frames
     if not (pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp)):
         return
