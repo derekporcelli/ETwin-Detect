@@ -10,6 +10,7 @@ import datetime
 import subprocess
 import threading
 import time
+import statistics
 
 # Conditional Scapy import
 try:
@@ -44,6 +45,7 @@ RSSI_ABS_THRESH_DEFAULT         = 20.0
 BEACON_PCT_THRESH_DEFAULT       = 50.0
 ALERT_COOLDOWN_DEFAULT          = 60
 BEACON_WINDOW_SECONDS_DEFAULT   = 30
+RSSI_WINDOW_DEFAULT             = 20
 
 
 def extract_rssi(pkt):
@@ -357,7 +359,8 @@ def scapy_monitor_handler(pkt):
     if rssi is not None:
         lst = state["recent_rssi"]
         lst.append(rssi)
-        lst = lst[-RSSI_WINDOW:]
+        window_size = cfg.get("rssi_window_size", RSSI_WINDOW_DEFAULT)
+        lst = lst[-window_size:]
         state["recent_rssi"] = lst
 
         if len(lst) >= 5:

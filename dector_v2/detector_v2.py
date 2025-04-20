@@ -42,6 +42,7 @@ CONFIG_DEFAULTS = {
         "rssi_spread_range_threshold": 25.0,
         "beacon_rate_threshold_percent": 50.0,
         "alert_cooldown_seconds": 60,
+        "rssi_window_size": 20     
     },
 }
 
