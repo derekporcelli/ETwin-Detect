@@ -285,6 +285,7 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
         return
 
     current_rate = len(state["beacon_timestamps"]) / window
+    print(base_rate, current_rate)
     pct_diff = abs(current_rate - base_rate) / base_rate * 100
     key = "beacon_rate"
     last_alert = state["last_alert_time"]
