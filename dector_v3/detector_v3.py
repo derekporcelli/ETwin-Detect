@@ -656,7 +656,7 @@ def run_profiling(iface):
         print(
             f"Saving {profile['ssid']} ({b}) "
             f"Ch:{best_chan} RSSI:{avg_rssi}±{std_rssi} "
-            f"Priv:'{priv}' Ciph:'{cip}' Auth:'{auth}' Rate:{rate}/s"
+            f"Priv:'{priv}' Ciph:'{cip}' Auth:'{auth}'"
         )
         add_to_whitelist(profile)
         count += 1
