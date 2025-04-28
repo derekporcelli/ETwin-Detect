@@ -11,23 +11,14 @@ import subprocess
 import threading
 import time
 import statistics
-
-# Conditional Scapy import
-try:
-    import scapy.all as scapy
-    from scapy.layers.dot11 import (
-        Dot11,
-        Dot11Beacon,
-        Dot11ProbeResp,
-        Dot11Elt,
-        RadioTap,
-    )
-
-    SCAPY_AVAILABLE = True
-except ImportError:
-    print("Warning: Scapy not found — monitoring disabled.")
-    scapy = None
-    SCAPY_AVAILABLE = False
+import scapy.all as scapy
+from scapy.layers.dot11 import (
+    Dot11,
+    Dot11Beacon,
+    Dot11ProbeResp,
+    Dot11Elt,
+    RadioTap,
+)
 
 # --- Global State ---
 ap_monitor_state = collections.defaultdict(
@@ -316,8 +307,6 @@ def scapy_monitor_handler(pkt):
     using thresholds from monitor_config_global, including batched
     beacon‑rate checks every N seconds.
     """
-    if not SCAPY_AVAILABLE:
-        return
 
     cfg = monitor_config_global
     targets = cfg.get("target_ssids", [])
@@ -466,9 +455,6 @@ def run_monitoring(iface, config, profiles, known):
     """
     Kick off channel‑hopping thread and Scapy sniff loop.
     """
-    if not SCAPY_AVAILABLE:
-        print("Error: Scapy not available.")
-        return
 
     global baseline_profiles_global
     global known_bssids_per_ssid_global

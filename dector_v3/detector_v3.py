@@ -5,7 +5,6 @@ import datetime
 import glob
 import json
 import os
-import re
 import shutil
 import signal
 import sqlite3
@@ -13,12 +12,11 @@ import statistics
 import subprocess
 import sys
 import time
-
 import pandas as pd
-
 from collections import defaultdict
-
 import monitor_logic
+import scapy.all as scapy
+from scapy.layers.dot11 import Dot11, Dot11Beacon, Dot11ProbeResp
 
 # --- Configuration Loading ---
 CONFIG_DEFAULTS = {
@@ -401,6 +399,67 @@ def parse_airodump_csv(csv_path):
         return pd.DataFrame()
 
 
+# v3 new rate logic
+def run_beacon_rate_profiling_scapy(iface):
+    """
+    After airodump-ng profiling, run Scapy to calculate "real" beacon rates.
+    Update the database with Scapy-based calculated beacon rates
+
+    Args:
+        iface (string): interface to use
+    """
+    db_path = config["general"]["db_name"]
+    profiling = config["profiling"]
+    target_ssids = profiling["target_ssids"]
+    sniff_time = 30
+    beacon_window = 30
+    print(f"Sniffing {sniff_time} seconds on interface {iface}...")
+    bssid_timestamps = defaultdict(list)
+
+    def handler(pkt):
+        if pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp):
+            if not pkt.haslayer(Dot11):
+                return
+            bssid = pkt[Dot11].addr2
+            ssid = monitor_logic.extract_ssid(pkt)
+            if not bssid or not ssid:
+                return
+            if ssid not in target_ssids:
+                return
+            bssid = bssid.lower()
+            ts = pkt.time
+            bssid_timestamps[bssid].append(ts)
+
+    scapy.sniff(iface=iface, prn=handler, store=False, timeout=sniff_time)
+    print(f"Captured beacons for {len(bssid_timestamps)} APs. Updating DB...")
+    # Update database
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    for bssid, timestamps in bssid_timestamps.items():
+        if len(timestamps) < 2:
+            continue
+
+        timestamps.sort()
+        first = timestamps[0]
+        last = timestamps[-1]
+        duration = max(last - first, 1.0)
+
+        beacon_rate = round(len(timestamps) / duration, 2)
+
+        print(f"  {bssid} rate: {beacon_rate}/s over {duration:.1f}s")
+
+        cursor.execute(
+            "UPDATE whitelist SET avg_beacon_rate = ? WHERE bssid = ?;",
+            (beacon_rate, bssid),
+        )
+
+    conn.commit()
+    conn.close()
+
+    print("Beacon rate update complete.")
+
+
 def run_profiling(iface):
     """
     Runs airodump-ng once, then parses and stores the results.
@@ -549,7 +608,7 @@ def run_profiling(iface):
     # compute and save
     now = datetime.datetime.now().isoformat()
     count = 0
-    duration = max(time.time() - start, 1.0)
+    # duration = max(time.time() - start, 1.0)
 
     for b, data in agg.items():
         if not data["ssid"]:
@@ -574,7 +633,8 @@ def run_profiling(iface):
                 best_avg = avg_ch
                 best_chan = ch
 
-        rate = round(data["beacons"] / duration, 2)
+        # v2 rate logic
+        # rate = round(data["beacons"] / duration, 2)
 
         priv = sorted(data["privacy"])[0] if data["privacy"] else None
         cip = sorted(data["cipher"])[0] if data["cipher"] else None
@@ -589,7 +649,7 @@ def run_profiling(iface):
             "privacy_raw": priv,
             "cipher_raw": cip,
             "authentication_raw": auth,
-            "avg_beacon_rate": rate,
+            "avg_beacon_rate": None,
             "profiled_time": now,
         }
 
