@@ -257,6 +257,7 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
     beacon_pct = cfg.get("beacon_rate_threshold_percent", BEACON_PCT_THRESH_DEFAULT)
     cooldown = cfg.get("alert_cooldown_seconds", ALERT_COOLDOWN_DEFAULT)
     last_alert = state.get("last_alert_time", 0)
+    last_rate  = state.get("last_beacon_rate_check", 0)
     key = "beacon_rate"
 
     # Update beacon timestamps (sliding window)
@@ -273,7 +274,7 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
 
     print(listen_time)
 
-    if listen_time < window:
+    if listen_time < window or (now - last_rate) < window:
         return
 
     print("Debug: Enough listen time...") # For Debug
@@ -302,8 +303,8 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
         )
         state["alert_states"][key] = True
         state["last_alert_time"] = now
-
     state["beacon_ts_by_ch"][ch].clear()
+    state["last_beacon_rate_check"] = now 
 
 
 def scapy_monitor_handler(pkt):
