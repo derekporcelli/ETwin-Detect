@@ -254,10 +254,8 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
     Check for beacon-rate anomalies every N seconds using a sliding window.
     """
     window = cfg.get("beacon_time_window", BEACON_WINDOW_SECONDS_DEFAULT)
-    rate_interval = cfg.get("beacon_rate_check_interval", 10)
     beacon_pct = cfg.get("beacon_rate_threshold_percent", BEACON_PCT_THRESH_DEFAULT)
     cooldown = cfg.get("alert_cooldown_seconds", ALERT_COOLDOWN_DEFAULT)
-    last_check = state.get("last_beacon_rate_check", None)
     last_alert = state.get("last_alert_time", 0)
     key = "beacon_rate"
 
@@ -272,13 +270,7 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
     if listen_time < window:
         return
 
-    # Rate-limit how often we run the expensive comparison
-    if last_check and (now - last_check) < rate_interval:
-        return
-
-    state["last_beacon_rate_check"] = now
-    # Update last check timestamp
-    state["last_beacon_rate_check"] = now
+    print("Debug: Enough listen time...") # For Debug
 
     base_rate = baseline.get("avg_beacon_rate")
     if not base_rate or base_rate <= 0:
