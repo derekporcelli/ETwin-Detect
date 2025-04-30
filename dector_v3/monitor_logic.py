@@ -264,8 +264,10 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
     ch_buf.append(now)
     # Drop entries older than our per-channel window
     ch_buf[:] = [ts for ts in ch_buf if (now - ts) <= window]
+    print(ch_buf)
 
-    print("In function")
+    # print("In function") #For Debug
+
     # Bail out if we haven't collected ≥ `window` seconds of airtime
     listen_time = ch_buf[-1] - ch_buf[0] if len(ch_buf) > 1 else 0
     if listen_time < window:
