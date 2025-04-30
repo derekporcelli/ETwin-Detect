@@ -14,7 +14,7 @@ import sys
 import time
 import pandas as pd
 from collections import defaultdict
-import dector_v3.monitor_logic as monitor_logic
+import det.monitor_logic as monitor_logic
 import scapy.all as scapy
 from scapy.layers.dot11 import Dot11, Dot11Beacon, Dot11ProbeResp
 
