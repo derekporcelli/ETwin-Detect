@@ -292,7 +292,7 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
 
     if pct_diff > beacon_pct and not state["alert_states"][key]:
         generate_alert(
-            bssid, ssid, ch, f"Beacon-Rate Δ {pct_diff:.0f}% > {beacon_pct}%", rssi
+            bssid, ssid, ch, f"Beacon-Rate Δ {pct_diff:.0f}% > {beacon_pct}%; Current rate: {current_rate}", rssi
         )
         state["alert_states"][key] = True
         state["last_alert_time"] = now
