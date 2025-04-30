@@ -24,7 +24,7 @@ from scapy.layers.dot11 import (
 ap_monitor_state = collections.defaultdict(
     lambda: {
         "recent_rssi": [],
-+       "beacon_ts_by_ch": collections.defaultdict(list), # Per-channel buffers 
+        "beacon_ts_by_ch": collections.defaultdict(list), # Per-channel buffers 
         "last_beacon_rate_check": 0,
         "last_auth_type": None,
         "last_cipher": None,
