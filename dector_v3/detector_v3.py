@@ -661,9 +661,11 @@ def run_profiling(iface):
         add_to_whitelist(profile)
         count += 1
 
+    print("Now sniffing for normal beacon rate...")
+    run_beacon_rate_profiling_scapy(iface=iface)
+
     print(f"{count} profiles saved.")
 
-    run_beacon_rate_profiling_scapy(iface=iface)
     try:
         shutil.rmtree(config["general"]["temp_dir"])
         print("Temp dir removed.")
