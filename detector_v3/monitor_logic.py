@@ -24,8 +24,12 @@ from scapy.layers.dot11 import (
 ap_monitor_state = collections.defaultdict(
     lambda: {
         "recent_rssi": [],
-        "beacon_ts_by_ch": collections.defaultdict(list),  # Per-channel buffers
-        "last_beacon_rate_check": 0,
+        "channel_state": collections.defaultdict(lambda: {
+            "beacon_ts": [],
+            "last_beacon_rate_check": 0,
+            "airtime": 0.0,
+            "last_enter_ts": None
+        }),
         "last_auth_type": None,
         "last_cipher": None,
         "alert_states": collections.defaultdict(bool),
@@ -235,76 +239,92 @@ def parse_auth(pkt):
 
 def channel_hopper(iface, stop_evt, channels, dwell):
     """
-    Simple thread to hop channels until stop_evt is set.
+    Hop through the given channels and update airtime tracking for each BSSID.
     """
     idx = 0
+    num_channels = len(channels)
+
+    current_ch = channels[0]
+    for bssid in ap_monitor_state:
+        ap_monitor_state[bssid]["channel_state"][current_ch]["last_enter_ts"] = time.time()
 
     while not stop_evt.is_set():
-        subprocess.run(
-            ["iwconfig", iface, "channel", str(channels[idx % len(channels)])]
-        )
+        next_ch = channels[idx % num_channels]
 
+        now = time.time()
+
+        for bssid in ap_monitor_state:
+            ch_state = ap_monitor_state[bssid]["channel_state"][current_ch]
+            enter_ts = ch_state.get("last_enter_ts")
+            if enter_ts:
+                ch_state["airtime"] += now - enter_ts
+
+        subprocess.run(["iwconfig", iface, "channel", str(next_ch)])
+
+        for bssid in ap_monitor_state:
+            ap_monitor_state[bssid]["channel_state"][next_ch]["last_enter_ts"] = time.time()
+
+        current_ch = next_ch
         time.sleep(dwell)
         idx += 1
+
 
 
 # Beacon Rate check helper function
 def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
     """
-    Check for beacon-rate anomalies every N seconds using a sliding window.
+    Check for beacon-rate anomalies every N seconds using a per-channel window.
     """
-    window = cfg.get("beacon_time_window", BEACON_WINDOW_SECONDS_DEFAULT)
-    beacon_pct = cfg.get("beacon_rate_threshold_percent", BEACON_PCT_THRESH_DEFAULT)
-    cooldown = cfg.get("alert_cooldown_seconds", ALERT_COOLDOWN_DEFAULT)
-    last_alert = state.get("last_alert_time", 0)
-    last_rate  = state.get("last_beacon_rate_check", 0)
-    key = "beacon_rate"
+    window      = cfg.get("beacon_time_window", BEACON_WINDOW_SECONDS_DEFAULT)
+    beacon_pct  = cfg.get("beacon_rate_threshold_percent", BEACON_PCT_THRESH_DEFAULT)
+    cooldown    = cfg.get("alert_cooldown_seconds", ALERT_COOLDOWN_DEFAULT)
+    last_alert  = state.get("last_alert_time", 0)
+    key         = "beacon_rate"
 
-    # Update beacon timestamps (sliding window)
-    ch_buf = state["beacon_ts_by_ch"][ch]
+    # Access per-channel buffer & timestamp
+    ch_state = state["channel_state"][ch]
+    ch_buf   = ch_state["beacon_ts"]
+    last_rate = ch_state["last_beacon_rate_check"]
+
+    # Add current timestamp and trim old ones
     ch_buf.append(now)
-    # Drop entries older than our per-channel window
     ch_buf[:] = [ts for ts in ch_buf if (now - ts) <= window]
-    print(ch_buf)
 
-    # print("In function") #For Debug
-
-    # Bail out if we haven't collected ≥ `window` seconds of airtime
-    listen_time = ch_buf[-1] - ch_buf[0] if len(ch_buf) > 1 else 0
-
-    print(listen_time)
+    # Listen time = how long we've seen beacons on this channel
+    listen_time = ch_state["airtime"]
 
     if listen_time < window or (now - last_rate) < window:
         return
-
-    print("Debug: Enough listen time...") # For Debug
 
     base_rate = baseline.get("avg_beacon_rate")
     if not base_rate or base_rate <= 0:
         return
 
-    # Current observed beacon rate (per second)
     current_rate = (len(ch_buf) - 1) / listen_time if listen_time > 0 else 0
-
     pct_diff = abs(current_rate - base_rate) / base_rate * 100
 
-    # Reset alert flag if cooldown passed
     if (now - last_alert) > cooldown:
         state["alert_states"][key] = False
 
-    print(f"Debug: Current rate: {current_rate}") # For Debug
     if pct_diff > beacon_pct and not state["alert_states"][key]:
         generate_alert(
             bssid,
             ssid,
             ch,
-            f"Beacon-Rate Δ {pct_diff:.0f}% > {beacon_pct}%; Current rate: {current_rate}",
+            f"Beacon-Rate Δ {pct_diff:.0f}% > {beacon_pct}%; Current rate: {current_rate:.2f}",
             rssi,
         )
         state["alert_states"][key] = True
         state["last_alert_time"] = now
-    state["beacon_ts_by_ch"][ch].clear()
-    state["last_beacon_rate_check"] = now 
+
+        # Optional: clear if you want non-overlapping rate windows
+
+    # Always update last per-channel rate check
+    ch_state["last_beacon_rate_check"] = now
+    ch_state["beacon_ts"].clear()
+    ch_state["airtime"] = 0.0
+
+
 
 
 def scapy_monitor_handler(pkt):
