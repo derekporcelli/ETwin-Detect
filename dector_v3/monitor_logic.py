@@ -24,11 +24,12 @@ from scapy.layers.dot11 import (
 ap_monitor_state = collections.defaultdict(
     lambda: {
         "recent_rssi": [],
-        "beacon_timestamps": [],
++       "beacon_ts_by_ch": collections.defaultdict(list), # Per-channel buffers 
+        "last_beacon_rate_check": 0,
         "last_auth_type": None,
         "last_cipher": None,
         "alert_states": collections.defaultdict(bool),
-        "last_alert_time": 0,
+        "last_alert_time": 0
     }
 )
 flagged_aps = {}
@@ -42,7 +43,7 @@ RSSI_RANGE_THRESH_DEFAULT = 25.0
 RSSI_ABS_THRESH_DEFAULT = 20.0
 BEACON_PCT_THRESH_DEFAULT = 50.0
 ALERT_COOLDOWN_DEFAULT = 5
-BEACON_WINDOW_SECONDS_DEFAULT = 30
+BEACON_WINDOW_SECONDS_DEFAULT = 20
 BEACON_RATE_CHECK_INTERVAL = 10
 RSSI_WINDOW_DEFAULT = 20
 
@@ -261,20 +262,21 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
     key = "beacon_rate"
 
     # Update beacon timestamps (sliding window)
-    state["beacon_timestamps"].append(now)
-    state["beacon_timestamps"] = [
-        ts for ts in state["beacon_timestamps"] if (now - ts) <= window
-    ]
+    ch_buf = state["beacon_ts_by_ch"][ch]
+    ch_buf.append(now)
+    # Drop entries older than our per-channel window
+    ch_buf[:] = [ts for ts in ch_buf if (now - ts) <= window]
 
-    # First-time check setup
-    if last_check is None:
-        state["last_beacon_rate_check"] = now
+    # Bail out if we haven't collected ≥ `window` seconds of airtime
+    listen_time = ch_buf[-1] - ch_buf[0] if len(ch_buf) > 1 else 0
+    if listen_time < window:
         return
 
-    # Not time for next check
-    if (now - last_check) < rate_interval:
+    # Rate-limit how often we run the expensive comparison
+    if last_check and (now - last_check) < rate_interval:
         return
-
+    
+    state["last_beacon_rate_check"] = now
     # Update last check timestamp
     state["last_beacon_rate_check"] = now
 
@@ -283,7 +285,8 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
         return
 
     # Current observed beacon rate (per second)
-    current_rate = len(state["beacon_timestamps"]) / window
+    current_rate = (len(ch_buf) - 1) / listen_time if listen_time > 0 else 0
+
     pct_diff = abs(current_rate - base_rate) / base_rate * 100
 
     # Reset alert flag if cooldown passed
@@ -297,8 +300,7 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
         state["alert_states"][key] = True
         state["last_alert_time"] = now
 
-        # Optional: clear history if you want per-interval (non-sliding) rate
-        state["beacon_timestamps"].clear()
+    state["beacon_ts_by_ch"][ch].clear()
 
 
 def scapy_monitor_handler(pkt):
