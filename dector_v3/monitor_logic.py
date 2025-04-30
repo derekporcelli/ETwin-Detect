@@ -270,6 +270,9 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
 
     # Bail out if we haven't collected ≥ `window` seconds of airtime
     listen_time = ch_buf[-1] - ch_buf[0] if len(ch_buf) > 1 else 0
+
+    print(listen_time)
+
     if listen_time < window:
         return
 
