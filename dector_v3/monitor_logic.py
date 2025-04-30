@@ -24,12 +24,12 @@ from scapy.layers.dot11 import (
 ap_monitor_state = collections.defaultdict(
     lambda: {
         "recent_rssi": [],
-        "beacon_ts_by_ch": collections.defaultdict(list), # Per-channel buffers 
+        "beacon_ts_by_ch": collections.defaultdict(list),  # Per-channel buffers
         "last_beacon_rate_check": 0,
         "last_auth_type": None,
         "last_cipher": None,
         "alert_states": collections.defaultdict(bool),
-        "last_alert_time": 0
+        "last_alert_time": 0,
     }
 )
 flagged_aps = {}
@@ -275,7 +275,7 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
     # Rate-limit how often we run the expensive comparison
     if last_check and (now - last_check) < rate_interval:
         return
-    
+
     state["last_beacon_rate_check"] = now
     # Update last check timestamp
     state["last_beacon_rate_check"] = now
@@ -293,9 +293,14 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
     if (now - last_alert) > cooldown:
         state["alert_states"][key] = False
 
+    print(f"Debug: Current rate: {current_rate}") # For Debug
     if pct_diff > beacon_pct and not state["alert_states"][key]:
         generate_alert(
-            bssid, ssid, ch, f"Beacon-Rate Δ {pct_diff:.0f}% > {beacon_pct}%; Current rate: {current_rate}", rssi
+            bssid,
+            ssid,
+            ch,
+            f"Beacon-Rate Δ {pct_diff:.0f}% > {beacon_pct}%; Current rate: {current_rate}",
+            rssi,
         )
         state["alert_states"][key] = True
         state["last_alert_time"] = now
