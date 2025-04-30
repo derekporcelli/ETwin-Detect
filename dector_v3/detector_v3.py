@@ -662,6 +662,8 @@ def run_profiling(iface):
         count += 1
 
     print(f"{count} profiles saved.")
+
+    run_beacon_rate_profiling_scapy(iface=iface)
     try:
         shutil.rmtree(config["general"]["temp_dir"])
         print("Temp dir removed.")
