@@ -482,7 +482,7 @@ def scapy_monitor_handler(pkt):
         lst = lst[-cfg.get("rssi_window_size", RSSI_WINDOW_DEFAULT):]
         state["recent_rssi"] = lst
 
-        if len(lst) >= 5:
+        if len(lst) >= 10:
             stdev = statistics.stdev(lst)
             rng = max(lst) - min(lst)
             key = "rssi_spread"
