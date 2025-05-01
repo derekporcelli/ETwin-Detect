@@ -305,7 +305,7 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
         state["alert_states"][key] = False
 
     
-    # print(f"Current rate in channel {ch}: {current_rate} === Debug") # For Debug
+    print(f"Current rate in channel {ch}: {current_rate} === Debug") # For Debug
 
     if pct_diff > beacon_pct and not state["alert_states"][key]:
         generate_alert(
