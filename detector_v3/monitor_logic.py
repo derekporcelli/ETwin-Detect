@@ -305,8 +305,7 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
         state["alert_states"][key] = False
 
     
-    print(f"Current rate: {current_rate} === Debug") # For Debug
-    print(f"Channel {ch}: {ch_state}")
+    # print(f"Current rate in channel {ch}: {current_rate} === Debug") # For Debug
 
     if pct_diff > beacon_pct and not state["alert_states"][key]:
         generate_alert(
@@ -318,8 +317,6 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
         )
         state["alert_states"][key] = True
         state["last_alert_time"] = now
-
-        # Optional: clear if you want non-overlapping rate windows
 
     # Always update last per-channel rate check
     ch_state["last_beacon_rate_check"] = now
