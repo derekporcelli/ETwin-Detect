@@ -1,6 +1,13 @@
 #!/bin/bash
 
-# === Evil Twin Simulation Launcher ===
+# === Evil Twin Simulation Launcher with Logging ===
+
+LOG_FILE="evil_twin_log.csv"
+
+# Ensure log file exists and has headers
+if [[ ! -f "$LOG_FILE" ]]; then
+    echo "start_time,end_time,interface,ssid,bssid,channel,encryption,mode" > "$LOG_FILE"
+fi
 
 # Ask for the monitor interface
 while true; do
@@ -41,19 +48,13 @@ read -rp "Enter option (1–6): " MODE
 # Default settings
 CH="$ORIG_CH"
 BSSID="$REAL_BSSID"
-ENC_TAG="-Z 4"    # WPA2-PSK/CCMP
+ENC_TAG="-Z 4"
 ENC_DESC="WPA2-PSK/CCMP"
 
 case $MODE in
-    1)
-        # Exact clone: no changes
-        ;;
-    2)
-        # BSSID mismatch
-        BSSID="$SPOOFED_BSSID"
-        ;;
+    1) ;;  # No change
+    2) BSSID="$SPOOFED_BSSID" ;;
     3)
-        # Channel mismatch
         while true; do
             read -rp "Enter DIFFERENT channel (≠ $ORIG_CH): " CH
             if [[ "$CH" =~ ^[0-9]+$ ]] && (( CH >= 1 && CH <= 11 && CH != ORIG_CH )); then
@@ -64,18 +65,15 @@ case $MODE in
         done
         ;;
     4)
-        # Auth mismatch: TKIP
         ENC_TAG="-Z 2"
         ENC_DESC="WPA2-PSK/TKIP"
         ;;
     5)
-        # WEP Evil Twin
         BSSID="$SPOOFED_BSSID"
         ENC_TAG="-z 1"
         ENC_DESC="WEP40"
         ;;
     6)
-        # OPEN Evil Twin
         BSSID="$SPOOFED_BSSID"
         ENC_TAG=""
         ENC_DESC="OPEN (no encryption)"
@@ -95,7 +93,21 @@ echo "    Encryption: $ENC_DESC"
 echo "    Interface:  $IFACE"
 echo ""
 
-sleep 1
+START_TIME=$(date +"%Y-%m-%d %H:%M:%S")
 
-# Run airbase-ng with the chosen parameters
-airbase-ng -e "$SSID_NAME" -a "$BSSID" -c "$CH" $ENC_TAG "$IFACE"
+# Launch airbase-ng and capture PID
+airbase-ng -e "$SSID_NAME" -a "$BSSID" -c "$CH" $ENC_TAG "$IFACE" &
+PID=$!
+
+# Trap Ctrl+C to log end time and clean up
+trap ' 
+    echo ""
+    echo "[*] Stopping simulation..."
+    kill $PID 2>/dev/null
+    END_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+    echo "$START_TIME,$END_TIME,$IFACE,$SSID_NAME,$BSSID,$CH,\"$ENC_DESC\",$MODE" >> "$LOG_FILE"
+    echo "[*] Logged to $LOG_FILE"
+    exit 0
+' SIGINT
+
+wait $PID
