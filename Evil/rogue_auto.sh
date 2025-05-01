@@ -3,8 +3,8 @@
 # === Automated Evil Twin Simulation Runner ===
 
 LOG_FILE="evil_twin_log.csv"
-DURATION=300  # Duration in seconds for each attack
-SLEEP_BETWEEN=10  # Seconds to wait between attacks
+DURATION=180  # Duration in seconds for each attack
+SLEEP_BETWEEN=60  # Seconds to wait between attacks
 
 # Ensure log file exists
 if [[ ! -f "$LOG_FILE" ]]; then
