@@ -75,8 +75,7 @@ for MODE in {1..6}; do
     airbase-ng -e "$SSID_NAME" -a "$BSSID" -c "$CH" $ENC_TAG "$IFACE" > /dev/null 2>&1 &
     RAP_PID=$!
 
-    # Let thekali
-     attack run for DURATION seconds
+    # Let the kali attack run for DURATION seconds
     sleep "$DURATION"
 
     # Kill the RAP process
