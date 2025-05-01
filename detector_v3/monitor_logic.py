@@ -19,6 +19,28 @@ from scapy.layers.dot11 import (
     Dot11Elt,
     RadioTap,
 )
+import csv 
+import os
+
+LOG_FILE = "detection_log.csv"
+def log_anomaly_event(timestamp, bssid, ssid, channel, reason, power, anomaly_type):
+    row = {
+        "timestamp": timestamp,
+        "bssid": bssid,
+        "ssid": ssid,
+        "channel": channel,
+        "rssi": power,
+        "reason": reason,
+        "anomaly_type": anomaly_type,
+    }
+
+    file_exists = os.path.exists(LOG_FILE)
+
+    with open(LOG_FILE, mode="a", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=row.keys())
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(row)
 
 # --- Global State ---
 ap_monitor_state = collections.defaultdict(
@@ -118,11 +140,29 @@ def extract_ssid(pkt):
 
 def generate_alert(bssid, ssid, channel, reason, power=None):
     """
-    Print an alert and record it in flagged_aps.
+    Print an alert and record it in flagged_aps. Also logs to CSV.
     """
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     info = f"BSSID:{bssid}, SSID:'{ssid}', CH:{channel or '?'}, PWR:{power}"
     print(f"ALERT [{timestamp}] {reason} | {info}")
+
+    # Determine alert type by keyword (optional: make this more robust later)
+    if "Beacon-Rate" in reason:
+        alert_type = "beacon_rate"
+    elif "Channel Mismatch" in reason:
+        alert_type = "channel_mismatch"
+    elif "RSSI Spread" in reason:
+        alert_type = "rssi_spread"
+    elif "RSSI Δ" in reason:
+        alert_type = "rssi_absolute"
+    elif "Auth Mismatch" in reason:
+        alert_type = "auth_cipher_mismatch"
+    elif "Different BSSID" in reason:
+        alert_type = "new_bssid"
+    else:
+        alert_type = "unknown"
+
+    log_anomaly_event(timestamp, bssid, ssid, channel, reason, power, alert_type)
 
     flagged_aps[bssid.lower()] = {
         "ssid": ssid,
@@ -131,6 +171,7 @@ def generate_alert(bssid, ssid, channel, reason, power=None):
         "time": timestamp,
         "power": power,
     }
+
 
 
 def parse_auth_details(privacy_set, cipher_set, auth_set):
