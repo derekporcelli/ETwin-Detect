@@ -287,7 +287,6 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
 
     # Add current timestamp and trim old ones
     ch_buf.append(now)
-    ch_buf[:] = [ts for ts in ch_buf if (now - ts) <= window]
 
     # Listen time = how long we've seen beacons on this channel
     listen_time = ch_state["airtime"]
