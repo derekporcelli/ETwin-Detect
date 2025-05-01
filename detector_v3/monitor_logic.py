@@ -55,7 +55,7 @@ BEACON_WINDOW_SECONDS_DEFAULT = 20
 RSSI_WINDOW_DEFAULT = 20
 
 LOG_FILE = "detection_log.csv"
-def log_anomaly_event(timestamp, bssid, ssid, channel, reason, power, anomaly_type, label="attack"):
+def log_anomaly_event(timestamp, bssid, ssid, channel, reason, power, anomaly_type):
     row = {
         "timestamp": timestamp,
         "bssid": bssid,
@@ -64,7 +64,6 @@ def log_anomaly_event(timestamp, bssid, ssid, channel, reason, power, anomaly_ty
         "rssi": power,
         "reason": reason,
         "anomaly_type": anomaly_type,
-        "label": label,
     }
 
     file_exists = os.path.exists(LOG_FILE)
@@ -74,20 +73,6 @@ def log_anomaly_event(timestamp, bssid, ssid, channel, reason, power, anomaly_ty
         if not file_exists:
             writer.writeheader()
         writer.writerow(row)
-
-def log_benign_event(pkt, bssid, ssid, channel, rssi):
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_anomaly_event(
-        timestamp=timestamp,
-        bssid=bssid,
-        ssid=ssid,
-        channel=channel,
-        reason="None",
-        power=rssi,
-        anomaly_type="none",
-        label="benign"
-    )
-
 
 def extract_rssi(pkt):
     """
@@ -497,7 +482,7 @@ def scapy_monitor_handler(pkt):
         lst = lst[-cfg.get("rssi_window_size", RSSI_WINDOW_DEFAULT):]
         state["recent_rssi"] = lst
 
-        if len(lst) >= 10:
+        if len(lst) >= 5:
             stdev = statistics.stdev(lst)
             rng = max(lst) - min(lst)
             key = "rssi_spread"
@@ -549,13 +534,10 @@ def scapy_monitor_handler(pkt):
             fired = True
     else:
         state["alert_states"][key] = False
-    
-    # Log benign observation if no alert was fired
-    if not fired:
-        log_benign_event(pkt, bssid, ssid, ch, rssi)
-    else:
-        state["last_alert_time"] = now
 
+    # Update overall last_alert_time
+    if fired:
+        state["last_alert_time"] = now
 
 
 
