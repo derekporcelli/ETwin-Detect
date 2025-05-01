@@ -19,6 +19,9 @@ REAL_BSSID="BC:A5:11:DF:04:7E"     # Replace with real AP BSSID
 SPOOFED_BSSID="66:77:88:99:AA:BB"  # Example spoofed BSSID
 SSID_NAME="malmalmal"
 
+echo "Initial Grace $SLEEP_BETWEEN seconds"
+sleep "$SLEEP_BETWEEN"
+
 for MODE in {1..6}; do
     case $MODE in
         1)
