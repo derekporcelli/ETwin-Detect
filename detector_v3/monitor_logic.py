@@ -22,25 +22,7 @@ from scapy.layers.dot11 import (
 import csv 
 import os
 
-LOG_FILE = "detection_log.csv"
-def log_anomaly_event(timestamp, bssid, ssid, channel, reason, power, anomaly_type):
-    row = {
-        "timestamp": timestamp,
-        "bssid": bssid,
-        "ssid": ssid,
-        "channel": channel,
-        "rssi": power,
-        "reason": reason,
-        "anomaly_type": anomaly_type,
-    }
 
-    file_exists = os.path.exists(LOG_FILE)
-
-    with open(LOG_FILE, mode="a", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=row.keys())
-        if not file_exists:
-            writer.writeheader()
-        writer.writerow(row)
 
 # --- Global State ---
 ap_monitor_state = collections.defaultdict(
@@ -72,6 +54,25 @@ ALERT_COOLDOWN_DEFAULT = 5
 BEACON_WINDOW_SECONDS_DEFAULT = 20
 RSSI_WINDOW_DEFAULT = 20
 
+LOG_FILE = "detection_log.csv"
+def log_anomaly_event(timestamp, bssid, ssid, channel, reason, power, anomaly_type):
+    row = {
+        "timestamp": timestamp,
+        "bssid": bssid,
+        "ssid": ssid,
+        "channel": channel,
+        "rssi": power,
+        "reason": reason,
+        "anomaly_type": anomaly_type,
+    }
+
+    file_exists = os.path.exists(LOG_FILE)
+
+    with open(LOG_FILE, mode="a", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=row.keys())
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(row)
 
 def extract_rssi(pkt):
     """
@@ -388,6 +389,14 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
     ch_state["airtime"] = 0.0
 
 
+def should_alert(state, key, now, cooldown):
+    """
+    Determine whether an alert should be raised based on cooldown.
+    """
+    last_time = state["alert_states"].get(f"{key}_last", 0)
+    if (now - last_time) > cooldown:
+        state["alert_states"][key] = False
+    return not state["alert_states"][key], last_time
 
 
 def scapy_monitor_handler(pkt):
@@ -404,22 +413,18 @@ def scapy_monitor_handler(pkt):
     abs_thresh = cfg.get("rssi_threshold_dbm_abs", RSSI_ABS_THRESH_DEFAULT)
     cooldown = cfg.get("alert_cooldown_seconds", ALERT_COOLDOWN_DEFAULT)
 
-    # Only handle Beacon or ProbeResp frames
     if not (pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp)):
         return
 
-    # Extract BSSID
     if not pkt.haslayer(Dot11):
         return
 
     bssid = pkt[Dot11].addr2
     if not bssid:
         return
-
     bssid = bssid.lower()
     now = pkt.time
 
-    # SSID filter
     ssid = extract_ssid(pkt)
     if ssid not in targets:
         return
@@ -428,13 +433,13 @@ def scapy_monitor_handler(pkt):
     baseline = baseline_profiles_global.get(bssid)
     known = known_bssids_per_ssid_global.get(ssid, set())
 
-    # 1) Unknown‐BSSID check
+    fired = False
+
+    # 1) Unknown BSSID
+    key = "new_bssid"
     if bssid not in known:
-        last = state["last_alert_time"]
-        key = "new_bssid"
-        if (now - last) > cooldown:
-            state["alert_states"][key] = False
-        if not state["alert_states"][key]:
+        should_fire, _ = should_alert(state, key, now, cooldown)
+        if should_fire:
             generate_alert(
                 bssid,
                 ssid,
@@ -443,21 +448,19 @@ def scapy_monitor_handler(pkt):
                 extract_rssi(pkt),
             )
             state["alert_states"][key] = True
-            state["last_alert_time"] = now
+            state["alert_states"][f"{key}_last"] = now
+            fired = True
 
     if not baseline:
         return
 
-    fired = False
-
     # 2) Channel mismatch
+    key = "chan_mismatch"
     ch = extract_channel(pkt)
     exp_ch = baseline.get("channel")
-    key = "chan_mismatch"
-    last = state["last_alert_time"]
-
     if ch is not None and exp_ch is not None and ch != exp_ch:
-        if not state["alert_states"][key] and (now - last) > cooldown:
+        should_fire, _ = should_alert(state, key, now, cooldown)
+        if should_fire:
             generate_alert(
                 bssid,
                 ssid,
@@ -466,27 +469,26 @@ def scapy_monitor_handler(pkt):
                 extract_rssi(pkt),
             )
             state["alert_states"][key] = True
+            state["alert_states"][f"{key}_last"] = now
             fired = True
     else:
         state["alert_states"][key] = False
 
-    # 3) RSSI spread
+    # 3) RSSI Spread
     rssi = extract_rssi(pkt)
     if rssi is not None:
         lst = state["recent_rssi"]
         lst.append(rssi)
-        window_size = cfg.get("rssi_window_size", RSSI_WINDOW_DEFAULT)
-        lst = lst[-window_size:]
+        lst = lst[-cfg.get("rssi_window_size", RSSI_WINDOW_DEFAULT):]
         state["recent_rssi"] = lst
 
-        if len(lst) >= 20:
+        if len(lst) >= 5:
             stdev = statistics.stdev(lst)
             rng = max(lst) - min(lst)
             key = "rssi_spread"
-            last = state["last_alert_time"]
-
-            if (stdev > thresh_stdev) or (rng > thresh_range):
-                if not state["alert_states"][key] and (now - last) > cooldown:
+            if stdev > thresh_stdev or rng > thresh_range:
+                should_fire, _ = should_alert(state, key, now, cooldown)
+                if should_fire:
                     generate_alert(
                         bssid,
                         ssid,
@@ -495,48 +497,48 @@ def scapy_monitor_handler(pkt):
                         rssi,
                     )
                     state["alert_states"][key] = True
+                    state["alert_states"][f"{key}_last"] = now
                     fired = True
             else:
                 state["alert_states"][key] = False
 
-    # 4) Absolute‐RSSI anomaly
+    # 4) Absolute RSSI difference
     if rssi is not None and baseline.get("avg_rssi") is not None:
-        diff = abs(rssi - baseline["avg_rssi"])
         key = "rssi_abs"
-        last = state["last_alert_time"]
-
+        diff = abs(rssi - baseline["avg_rssi"])
         if diff > abs_thresh:
-            if not state["alert_states"][key] and (now - last) > cooldown:
+            should_fire, _ = should_alert(state, key, now, cooldown)
+            if should_fire:
                 generate_alert(bssid, ssid, ch, f"RSSI Δ > {abs_thresh} dB", rssi)
                 state["alert_states"][key] = True
+                state["alert_states"][f"{key}_last"] = now
                 fired = True
         else:
             state["alert_states"][key] = False
 
-    # --- Beacon-Rate Anomaly ---
+    # 5) Beacon Rate Anomaly
     check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg)
 
     # 6) Auth/Cipher mismatch
+    key = "auth_mismatch"
     auth_type, cipher = parse_auth(pkt)
     exp_auth = baseline.get("auth_type")
     exp_ciph = baseline.get("cipher")
-    key = "auth_mismatch"
-    last = state["last_alert_time"]
-
     if (auth_type != exp_auth) or (cipher != exp_ciph):
-        if not state["alert_states"][key] and (now - last) > cooldown:
-            reason = (
-                f"Auth Mismatch (Got {auth_type}/{cipher}, "
-                f"Exp {exp_auth}/{exp_ciph})"
-            )
+        should_fire, _ = should_alert(state, key, now, cooldown)
+        if should_fire:
+            reason = f"Auth Mismatch (Got {auth_type}/{cipher}, Exp {exp_auth}/{exp_ciph})"
             generate_alert(bssid, ssid, ch, reason, rssi)
             state["alert_states"][key] = True
+            state["alert_states"][f"{key}_last"] = now
             fired = True
     else:
         state["alert_states"][key] = False
 
+    # Update overall last_alert_time
     if fired:
         state["last_alert_time"] = now
+
 
 
 def run_monitoring(iface, config, profiles, known):
