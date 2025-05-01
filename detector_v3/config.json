@@ -12,7 +12,7 @@
   },
   "monitoring": {
       "target_ssids": ["malmalmal"],
-      "scan_dwell_seconds": 0.2,
+      "scan_dwell_seconds": 2,
       "rssi_threshold_stdev": 3.0,
       "rssi_threshold_dbm_abs": 20,
       "rssi_spread_stdev_threshold": 10.0,

@@ -317,6 +317,8 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
         )
         state["alert_states"][key] = True
         state["last_alert_time"] = now
+    else:
+        state["alert_states"][key] = False
 
     # Always update last per-channel rate check
     ch_state["last_beacon_rate_check"] = now
