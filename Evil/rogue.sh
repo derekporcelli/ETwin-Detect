@@ -77,7 +77,7 @@ case $MODE in
     6)
         # OPEN Evil Twin
         BSSID="$SPOOFED_BSSID"
-        ENC_TAG="-z 0"
+        ENC_TAG=""
         ENC_DESC="OPEN (no encryption)"
         ;;
     *)
