@@ -412,7 +412,6 @@ def run_beacon_rate_profiling_scapy(iface):
     profiling = config["profiling"]
     target_ssids = profiling["target_ssids"]
     sniff_time = 30
-    beacon_window = 30
     print(f"Sniffing {sniff_time} seconds on interface {iface}...")
     bssid_timestamps = defaultdict(list)
 

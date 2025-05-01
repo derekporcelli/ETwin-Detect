@@ -48,7 +48,6 @@ RSSI_ABS_THRESH_DEFAULT = 20.0
 BEACON_PCT_THRESH_DEFAULT = 50.0
 ALERT_COOLDOWN_DEFAULT = 5
 BEACON_WINDOW_SECONDS_DEFAULT = 20
-BEACON_RATE_CHECK_INTERVAL = 10
 RSSI_WINDOW_DEFAULT = 20
 
 
@@ -305,6 +304,10 @@ def check_beacon_rate(state, bssid, ssid, ch, now, rssi, baseline, cfg):
 
     if (now - last_alert) > cooldown:
         state["alert_states"][key] = False
+
+    
+    print(f"Current rate: {current_rate} === Debug") # For Debug
+    print(f"Channel {ch}: {ch_state}")
 
     if pct_diff > beacon_pct and not state["alert_states"][key]:
         generate_alert(
