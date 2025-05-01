@@ -539,8 +539,6 @@ def scapy_monitor_handler(pkt):
     if fired:
         state["last_alert_time"] = now
 
-
-
 def run_monitoring(iface, config, profiles, known):
     """
     Kick off channel‑hopping thread and Scapy sniff loop.
