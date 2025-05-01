@@ -183,57 +183,78 @@ def parse_auth_details(privacy_set, cipher_set, auth_set):
 
 def parse_auth(pkt):
     """
-    Extract raw privacy/cipher/auth sets from IEs & caps,
-    then call parse_auth_details().
+    Parse RSN (WPA2+) and WPA (legacy) elements to extract true cipher/auth types.
+    Returns (auth_type, cipher) as strings like 'WPA2-PSK', 'CCMP'.
     """
     privacy = set()
     cipher = set()
     auth = set()
 
     elt = pkt.getlayer(Dot11Elt)
-
     while elt:
-        if elt.ID == 48:
+        # WPA2/3: RSN Information Element
+        if elt.ID == 48 and len(elt.info) >= 18:
             privacy.add("WPA2")
+            data = elt.info
 
-        if elt.ID == 221:
+            group_cipher = data[2:6]
+            pairwise_cipher = data[8:12]
+            akm = data[14:18]
+
+            # Cipher suite (group)
+            if group_cipher == b"\x00\x0f\xac\x04":
+                cipher.add("CCMP")
+            elif group_cipher == b"\x00\x0f\xac\x02":
+                cipher.add("TKIP")
+            elif group_cipher == b"\x00\x0f\xac\x08":
+                cipher.add("GCMP-256")
+
+            # AKM suite (auth method)
+            if akm == b"\x00\x0f\xac\x02":
+                auth.add("PSK")
+            elif akm == b"\x00\x0f\xac\x01":
+                auth.add("EAP")
+            elif akm == b"\x00\x0f\xac\x08":
+                auth.add("SAE")
+
+        # WPA1: Vendor-specific (Microsoft OUI)
+        elif elt.ID == 221 and elt.info.startswith(b"\x00\x50\xf2\x01") and len(elt.info) >= 16:
             privacy.add("WPA")
+            data = elt.info
 
-        if (
-            elt.payload
-            and isinstance(elt.payload, scapy.Packet)
-            and elt.payload.haslayer(Dot11Elt)
-        ):
-            elt = elt.payload.getlayer(Dot11Elt)
-        else:
-            break
+            cipher_suite = data[8:12]
+            akm = data[12:16]
 
+            if cipher_suite == b"\x00\x50\xf2\x02":
+                cipher.add("TKIP")
+            elif cipher_suite == b"\x00\x50\xf2\x04":
+                cipher.add("CCMP")
+
+            if akm == b"\x00\x50\xf2\x01":
+                auth.add("PSK")
+            elif akm == b"\x00\x50\xf2\x02":
+                auth.add("EAP")
+
+        elt = elt.payload.getlayer(Dot11Elt)
+
+    # Fallback for WEP/Open
     cap = None
-
     if pkt.haslayer(Dot11Beacon):
         cap = pkt[Dot11Beacon].cap
     elif pkt.haslayer(Dot11ProbeResp):
         cap = pkt[Dot11ProbeResp].cap
 
-    if cap and getattr(cap, "Privacy", False):
+    if cap and getattr(cap, "privacy", False) and not privacy:
         privacy.add("WEP")
-
-    if not privacy:
-        privacy.add("OPN")
-
-    if "WPA3" in privacy:
-        auth.add("SAE")
-        cipher.add("GCMP-256")
-    elif "WPA2" in privacy:
-        auth.add("PSK")
-        cipher.update({"CCMP", "TKIP"})
-    elif "WPA" in privacy:
-        auth.add("PSK")
-        cipher.add("TKIP")
-    elif "WEP" in privacy:
         cipher.add("WEP")
+        auth.add("WEP")
+    elif not privacy:
+        privacy.add("OPN")
+        cipher.add("None")
+        auth.add("None")
 
     return parse_auth_details(privacy, cipher, auth)
+
 
 
 def channel_hopper(iface, stop_evt, channels, dwell):
@@ -473,7 +494,6 @@ def scapy_monitor_handler(pkt):
     else:
         state["alert_states"][key] = False
 
-    # 7) If anything fired, update last_alert_time
     if fired:
         state["last_alert_time"] = now
 
