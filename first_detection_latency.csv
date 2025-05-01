@@ -1,0 +1,7 @@
+mode,description,latency_seconds
+1,Exact Clone (WPA2-PSK/CCMP),11.0
+2,BSSID Mismatch,15.0
+3,Channel Mismatch,0.0
+4,Auth Mismatch (TKIP),0.0
+5,WEP Evil Twin,2.0
+6,OPEN Evil Twin,5.0

@@ -1,0 +1,7 @@
+start_time,end_time,interface,ssid,bssid,channel,encryption,mode
+2025-05-01 03:42:37,2025-05-01 03:45:37,wlan0mon,malmalmal,BC:A5:11:DF:04:7E,1,"WPA2-PSK/CCMP",1
+2025-05-01 03:46:37,2025-05-01 03:49:38,wlan0mon,malmalmal,66:77:88:99:AA:BB,1,"WPA2-PSK/CCMP",2
+2025-05-01 03:50:38,2025-05-01 03:53:38,wlan0mon,malmalmal,BC:A5:11:DF:04:7E,2,"WPA2-PSK/CCMP",3
+2025-05-01 03:54:38,2025-05-01 03:57:38,wlan0mon,malmalmal,BC:A5:11:DF:04:7E,1,"WPA2-PSK/TKIP",4
+2025-05-01 03:58:38,2025-05-01 04:01:38,wlan0mon,malmalmal,66:77:88:99:AA:BB,1,"WEP40",5
+2025-05-01 04:02:38,2025-05-01 04:05:38,wlan0mon,malmalmal,66:77:88:99:AA:BB,1,"OPEN (no encryption)",6

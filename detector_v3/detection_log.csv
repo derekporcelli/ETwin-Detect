@@ -1,0 +1,312 @@
+timestamp,bssid,ssid,channel,rssi,reason,anomaly_type
+2025-05-01 03:42:48,bc:a5:11:df:04:7e,malmalmal,1,-55,Beacon-Rate Δ 36% > 25.0%; Current rate: 12.83,beacon_rate
+2025-05-01 03:42:48,bc:a5:11:df:04:7e,malmalmal,1,-43,RSSI Spread Anomaly (StDev:2.7 Rng:13dB),rssi_spread
+2025-05-01 03:43:10,bc:a5:11:df:04:7e,malmalmal,1,-43,RSSI Spread Anomaly (StDev:2.8 Rng:13dB),rssi_spread
+2025-05-01 03:43:32,bc:a5:11:df:04:7e,malmalmal,1,-40,RSSI Spread Anomaly (StDev:3.7 Rng:15dB),rssi_spread
+2025-05-01 03:43:54,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.2 Rng:15dB),rssi_spread
+2025-05-01 03:44:17,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.2 Rng:16dB),rssi_spread
+2025-05-01 03:44:39,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.2 Rng:15dB),rssi_spread
+2025-05-01 03:44:39,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:44:39,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.6 Rng:16dB),rssi_spread
+2025-05-01 03:44:41,bc:a5:11:df:04:7e,malmalmal,1,-40,Beacon-Rate Δ 289% > 25.0%; Current rate: 36.83,beacon_rate
+2025-05-01 03:45:01,bc:a5:11:df:04:7e,malmalmal,1,-53,RSSI Spread Anomaly (StDev:4.9 Rng:18dB),rssi_spread
+2025-05-01 03:45:23,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.4 Rng:16dB),rssi_spread
+2025-05-01 03:45:23,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:45:23,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:45:23,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:45:45,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.7 Rng:17dB),rssi_spread
+2025-05-01 03:46:07,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:4.6 Rng:16dB),rssi_spread
+2025-05-01 03:46:07,bc:a5:11:df:04:7e,malmalmal,1,-54,Beacon-Rate Δ 207% > 25.0%; Current rate: 29.00,beacon_rate
+2025-05-01 03:46:52,66:77:88:99:aa:bb,malmalmal,1,-40,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 03:47:14,66:77:88:99:aa:bb,malmalmal,1,-42,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 03:47:36,66:77:88:99:aa:bb,malmalmal,1,-43,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 03:47:58,66:77:88:99:aa:bb,malmalmal,1,-39,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 03:48:20,66:77:88:99:aa:bb,malmalmal,1,-41,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 03:48:42,66:77:88:99:aa:bb,malmalmal,1,-40,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 03:49:04,66:77:88:99:aa:bb,malmalmal,1,-39,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 03:49:26,66:77:88:99:aa:bb,malmalmal,1,-41,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 03:50:38,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:38,bc:a5:11:df:04:7e,malmalmal,2,-38,RSSI Spread Anomaly (StDev:3.6 Rng:17dB),rssi_spread
+2025-05-01 03:50:38,bc:a5:11:df:04:7e,malmalmal,2,-38,Beacon-Rate Δ 90% > 25.0%; Current rate: 0.94,beacon_rate
+2025-05-01 03:50:55,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:7.8 Rng:17dB),rssi_spread
+2025-05-01 03:50:55,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:55,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:55,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:56,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:56,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:56,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:56,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:56,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:56,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:56,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:56,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:56,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:57,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:57,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:57,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:57,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:50:57,bc:a5:11:df:04:7e,malmalmal,2,-35,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:17,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:17,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:4.0 Rng:18dB),rssi_spread
+2025-05-01 03:51:17,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:17,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:18,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:18,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:18,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:18,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:18,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:18,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:18,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:18,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.6 Rng:17dB),rssi_spread
+2025-05-01 03:51:18,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:19,bc:a5:11:df:04:7e,malmalmal,2,-36,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:19,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:19,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:19,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:19,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:19,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:22,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:39,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.4 Rng:16dB),rssi_spread
+2025-05-01 03:51:40,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:40,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:40,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:40,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:40,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:41,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:51:43,bc:a5:11:df:04:7e,malmalmal,2,-39,Beacon-Rate Δ 201% > 25.0%; Current rate: 28.50,beacon_rate
+2025-05-01 03:52:02,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.5 Rng:17dB),rssi_spread
+2025-05-01 03:52:02,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:02,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:02,bc:a5:11:df:04:7e,malmalmal,2,-40,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:02,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:02,bc:a5:11:df:04:7e,malmalmal,2,-40,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:04,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:04,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:24,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:24,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.3 Rng:17dB),rssi_spread
+2025-05-01 03:52:24,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:24,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:24,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:24,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:24,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:24,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:24,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:25,bc:a5:11:df:04:7e,malmalmal,2,-40,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:25,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:25,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:25,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:25,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:25,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:25,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:25,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:25,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:27,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:28,bc:a5:11:df:04:7e,malmalmal,2,-40,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:46,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.4 Rng:16dB),rssi_spread
+2025-05-01 03:52:48,bc:a5:11:df:04:7e,malmalmal,2,-37,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:48,bc:a5:11:df:04:7e,malmalmal,2,-37,RSSI Spread Anomaly (StDev:3.6 Rng:17dB),rssi_spread
+2025-05-01 03:52:50,bc:a5:11:df:04:7e,malmalmal,2,-39,Beacon-Rate Δ 129% > 25.0%; Current rate: 21.65,beacon_rate
+2025-05-01 03:52:50,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:52:50,bc:a5:11:df:04:7e,malmalmal,2,-38,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:53:08,bc:a5:11:df:04:7e,malmalmal,1,-53,RSSI Spread Anomaly (StDev:3.3 Rng:15dB),rssi_spread
+2025-05-01 03:53:10,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:53:13,bc:a5:11:df:04:7e,malmalmal,2,-40,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:53:30,bc:a5:11:df:04:7e,malmalmal,1,-53,RSSI Spread Anomaly (StDev:3.0 Rng:16dB),rssi_spread
+2025-05-01 03:53:32,bc:a5:11:df:04:7e,malmalmal,2,-39,Channel Mismatch (Expected 1),channel_mismatch
+2025-05-01 03:53:52,bc:a5:11:df:04:7e,malmalmal,1,-53,RSSI Spread Anomaly (StDev:3.6 Rng:17dB),rssi_spread
+2025-05-01 03:53:52,bc:a5:11:df:04:7e,malmalmal,1,-53,Beacon-Rate Δ 97% > 25.0%; Current rate: 18.66,beacon_rate
+2025-05-01 03:54:38,bc:a5:11:df:04:7e,malmalmal,1,-37,RSSI Spread Anomaly (StDev:3.8 Rng:17dB),rssi_spread
+2025-05-01 03:54:38,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:38,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:38,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:38,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:38,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:38,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:58,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.6 Rng:17dB),rssi_spread
+2025-05-01 03:54:59,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:59,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:59,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:59,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:59,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:59,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:59,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:59,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:59,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:54:59,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:00,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:00,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:00,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:00,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:00,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:00,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:00,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:00,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:00,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:00,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:21,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:21,bc:a5:11:df:04:7e,malmalmal,1,-53,RSSI Spread Anomaly (StDev:3.5 Rng:16dB),rssi_spread
+2025-05-01 03:55:21,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:21,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:21,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:21,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:21,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:21,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:21,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:22,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:22,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:22,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:22,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:22,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:22,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:22,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:22,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:22,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:22,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:23,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:23,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:43,bc:a5:11:df:04:7e,malmalmal,1,-37,RSSI Spread Anomaly (StDev:4.5 Rng:16dB),rssi_spread
+2025-05-01 03:55:43,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:43,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:43,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:43,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:43,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:43,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:43,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:43,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:44,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:44,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:44,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:44,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:44,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:44,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:44,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:44,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:44,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:45,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:55:45,bc:a5:11:df:04:7e,malmalmal,1,-38,Beacon-Rate Δ 240% > 25.0%; Current rate: 32.16,beacon_rate
+2025-05-01 03:56:05,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:05,bc:a5:11:df:04:7e,malmalmal,1,-53,RSSI Spread Anomaly (StDev:3.3 Rng:16dB),rssi_spread
+2025-05-01 03:56:05,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:05,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:05,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:05,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:05,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:06,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:06,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:06,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:06,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:06,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:06,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:06,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:06,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:06,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:06,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:07,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:07,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:07,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:07,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:07,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:27,bc:a5:11:df:04:7e,malmalmal,1,-53,RSSI Spread Anomaly (StDev:3.3 Rng:15dB),rssi_spread
+2025-05-01 03:56:27,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:27,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:27,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:27,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:28,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:28,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:28,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:28,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:28,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:28,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:28,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:28,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:28,bc:a5:11:df:04:7e,malmalmal,1,-53,RSSI Spread Anomaly (StDev:3.5 Rng:16dB),rssi_spread
+2025-05-01 03:56:28,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:28,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:28,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:29,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:29,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:29,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:29,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:29,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:29,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:49,bc:a5:11:df:04:7e,malmalmal,1,-37,RSSI Spread Anomaly (StDev:6.7 Rng:16dB),rssi_spread
+2025-05-01 03:56:49,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:49,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:49,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:49,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:50,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:50,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:50,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:50,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:50,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:50,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:50,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:50,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:50,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:51,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:51,bc:a5:11:df:04:7e,malmalmal,1,-36,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:51,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:51,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:51,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:51,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:56:51,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:11,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:3.6 Rng:16dB),rssi_spread
+2025-05-01 03:57:11,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:11,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:12,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:12,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:12,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:12,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:12,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:12,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:12,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:12,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:12,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:12,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:13,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:13,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:13,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:13,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:13,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:13,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:13,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:13,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:33,bc:a5:11:df:04:7e,malmalmal,1,-37,RSSI Spread Anomaly (StDev:4.6 Rng:17dB),rssi_spread
+2025-05-01 03:57:33,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:34,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:34,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:34,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:34,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:34,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:34,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:34,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:34,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:34,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:35,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:35,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:35,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:35,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:35,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:35,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:35,bc:a5:11:df:04:7e,malmalmal,1,-38,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:35,bc:a5:11:df:04:7e,malmalmal,1,-37,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:35,bc:a5:11:df:04:7e,malmalmal,1,-39,"Auth Mismatch (Got WPA2-PSK/TKIP, Exp WPA2-PSK/CCMP)",auth_cipher_mismatch
+2025-05-01 03:57:56,bc:a5:11:df:04:7e,malmalmal,1,-54,RSSI Spread Anomaly (StDev:4.6 Rng:16dB),rssi_spread
+2025-05-01 03:58:18,bc:a5:11:df:04:7e,malmalmal,1,-54,Beacon-Rate Δ 203% > 25.0%; Current rate: 28.66,beacon_rate
+2025-05-01 03:58:40,66:77:88:99:aa:bb,malmalmal,1,-38,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 03:59:02,66:77:88:99:aa:bb,malmalmal,1,-36,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 03:59:24,66:77:88:99:aa:bb,malmalmal,1,-36,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 03:59:46,66:77:88:99:aa:bb,malmalmal,1,-36,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:00:08,66:77:88:99:aa:bb,malmalmal,1,-36,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:00:31,66:77:88:99:aa:bb,malmalmal,1,-36,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:00:53,66:77:88:99:aa:bb,malmalmal,1,-36,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:01:15,66:77:88:99:aa:bb,malmalmal,1,-36,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:01:37,66:77:88:99:aa:bb,malmalmal,1,-38,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:02:43,66:77:88:99:aa:bb,malmalmal,1,-40,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:03:06,66:77:88:99:aa:bb,malmalmal,1,-38,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:03:28,66:77:88:99:aa:bb,malmalmal,1,-38,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:03:50,66:77:88:99:aa:bb,malmalmal,1,-39,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:04:12,66:77:88:99:aa:bb,malmalmal,1,-40,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:04:34,66:77:88:99:aa:bb,malmalmal,1,-40,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:04:56,66:77:88:99:aa:bb,malmalmal,1,-39,Different BSSID (Potential Evil Twin),new_bssid
+2025-05-01 04:05:18,66:77:88:99:aa:bb,malmalmal,1,-41,Different BSSID (Potential Evil Twin),new_bssid
