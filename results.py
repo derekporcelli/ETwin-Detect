@@ -220,3 +220,46 @@ ax.legend(handles=handles, loc="upper left", fontsize="small")
 plt.tight_layout()
 plt.savefig("timeline_final.png")
 plt.show()
+
+# --- Proportion of Detection Types per Scenario ---
+
+# Initialize container
+type_summary = []
+
+for _, row in attacks.iterrows():
+    start, end = row["start_time"], row["end_time"]
+    mode = row["mode"]
+    desc = mode_desc.get(mode, f"Mode {mode}")
+    match = detections[
+        (detections["timestamp"] >= start) &
+        (detections["timestamp"] <= end)
+    ]
+    type_counts = match["anomaly_type"].value_counts(normalize=True).to_dict()
+    type_counts["Scenario"] = desc
+    type_summary.append(type_counts)
+
+# Create DataFrame and fill NaNs with 0
+type_df = pd.DataFrame(type_summary).fillna(0)
+
+# Plot: Stacked bar chart of proportions
+plt.figure(figsize=(10, 6))
+bottom = pd.Series([0] * len(type_df))
+
+for col in type_df.columns:
+    if col == "Scenario":
+        continue
+    plt.bar(
+        type_df["Scenario"],
+        type_df[col],
+        bottom=bottom,
+        label=col
+    )
+    bottom += type_df[col]
+
+plt.xticks(rotation=30, ha="right")
+plt.ylabel("Proportion of Detections")
+plt.title("Detection Type Proportions per Evil Twin Scenario")
+plt.legend(title="Anomaly Type", bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.tight_layout()
+plt.savefig("detection_type_proportions.png")
+plt.show()
