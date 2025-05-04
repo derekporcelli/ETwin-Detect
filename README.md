@@ -122,6 +122,6 @@ timestamp,bssid,ssid,channel,rssi,reason,anomaly_type
 ├── detection_log.csv      # Output log file
 ```
 
-## 👤 Authors
+## Authors
 
 Designed and implemented by Han Chen, D'Angelo, Andy Porcelli Derek, Natarajan Pranav.
